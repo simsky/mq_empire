@@ -1,0 +1,52 @@
+Dim screenX = GetScreenX(), screenY = GetScreenY()
+
+//---------------------------------------------------------
+// 全屏搜图
+// intXY 必须是数组
+//---------------------------------------------------------
+Function findPicFull(picName, intXY)
+    findPicFull = FindPicRegion(0, 0, 0, 0, picName, intXY)
+End Function
+
+//---------------------------------------------------------
+// 屏幕上半部搜图
+//---------------------------------------------------------
+Function findPicHalfTop(picName, intXY)
+	findPicHalfTop = FindPicRegion( 0, 0, screenX, screenY/2, picName, intXY)
+End Function
+
+//---------------------------------------------------------
+// 屏幕下半部搜图
+//---------------------------------------------------------
+Function findPicHalfBottom(picName, intXY)
+	findPicHalfBottom = FindPicRegion( 0, screenY/2, screenX, screenY, picName, intXY)
+End Function
+
+//---------------------------------------------------------
+// 指定区域搜图
+//---------------------------------------------------------
+Function findPicRegion(x1, y1, x2, y2, picName, intXY)
+    If IsArray(intXY) = False Then 
+    	TracePrint "[ERROR] [findPicRegion] invalid input parameter: intXY."
+    	findPicRegion = -1
+    End If
+	
+	findPicRegion = FindPic(x1, y1, x2, y2, picName, "101010", 0, 0.9, intXY(0), intXY(1))
+    If intXY(0) = -1 or intXY(1) = -1 Then 
+        //TracePrint "[findPicRegion] can not find: " & picName & " from[" & x1 & "," & y1 & ";"& x2 & "," & y2
+    End If
+End Function
+
+Function tapPositionDelay(x, y, delayTime)
+    Tap x, y
+    Delay delayTime
+End Function
+
+Function tapPositionTimes(x, y, times)
+    For i = 1 To times
+        Tap x, y
+    Next
+	
+    //TracePrint "tap:" & x & "," & y
+    Delay 250
+End Function

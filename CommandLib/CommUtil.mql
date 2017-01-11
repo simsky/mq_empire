@@ -1,0 +1,127 @@
+//---------------------------------------------------------
+// 将字符串转换为二维数组，默认使用“#,”作为行列分隔符号
+//---------------------------------------------------------
+Function split2DimArray(line)
+    split2DimArray = split2DimArrayEx(line, "#", ",")
+End Function
+
+Function split2DimArrayEx(line, lineSplit, colSplit)
+    Dim tmpD1Str = Split(line, lineSplit)
+    Dim tmpD2Array = Array(UBOUND(tmpD1Str)+1)
+    For i = 0 To UBOUND(tmpD1Str)
+        tmpD2Array(i) = Split(tmpD1Str(i), colSplit)
+    Next
+	
+    split2DimArrayEx = tmpD2Array
+End Function
+
+//---------------------------------------------------------
+// 将二维数组标准化为指定长度的数字类型数组
+// 不足的元素用0不足，其他转换为整形
+//---------------------------------------------------------
+Function extend2DArray(data, size)
+    For i = 0 To UBOUND(data)
+        Dim tmp = Array(size)
+        For j = 0 To size-1
+            If j > UBOUND(data(i)) Then 
+                tmp(j) = 0
+            Else
+                tmp(j) = CINT(data(i, j))
+            End If
+        Next
+		
+        data(i) = tmp
+    Next
+End Function
+
+//---------------------------------------------------------
+// 合并二维数组为数字串
+//---------------------------------------------------------
+Function Join2DimArray(value)
+    Dim str
+    For i = 0 To UBOUND(value)
+        str = str & Join(value(i), ",") & ";" & Space(2)
+    Next
+    Join2DimArray = str
+End Function
+
+Function Join3DimArray(value)
+    Dim str
+    For i = 0 To UBOUND(value)
+        for j=0 to UBOUND(value(i))
+			str = str & Join(value(i,j), ",") & ";" & Space(2)
+		next
+    Next
+    Join3DimArray = str
+End Function
+//---------------------------------------------------------
+// 合并两个数组为一个数组
+//---------------------------------------------------------
+Function mergeArray(src1, src2)
+    Dim len1 = UBOUND(src1), len2 = UBOUND(src2)
+	Dim tmp = Array(len1+len2)
+    For i = 0 To len1
+        tmp(i) = src1(i)
+    Next
+	
+    For i = 0 To len2
+        tmp(len1+1+i) = src2(i)
+    Next
+    mergeArray = tmp
+End Function
+
+//---------------------------------------------------------
+// 数组排序
+//---------------------------------------------------------
+Function sortArray(src)
+	Dim tmp = Clone(src), tmpValue
+	For i = 0 To UBOUND(src)-1
+		For j = i+1 To UBOUND(src)
+			If tmp(i) > tmp(j) Then 
+				tmpValue = tmp(i)
+				tmp(i) = tmp(j)
+				tmp(j) = tmpValue
+			End If
+		Next
+	Next
+	sortArray = tmp
+End Function
+
+//---------------------------------------------------------
+// 手动控制字体识别或者截图时，是否使用缓存
+// force参数 1：强制刷新截屏缓存，0：如果已经缓存则不刷新，反之则刷新。
+// capKeepMem和capRealseMem必须配对使用，否则出错。
+//---------------------------------------------------------
+Dim isCaptureKeep = false
+Function capKeepMem(force)
+    If force<>0 or Not(isCaptureKeep) Then
+        //TracePrint "KeepCapture"
+        KeepCapture 
+        isCaptureKeep = True
+        capKeepMem = True
+    Else
+        capKeepMem = False
+    End If
+End Function
+
+Function capRealseMem
+    ReleaseCapture 
+    isCaptureKeep = false
+End Function
+
+//---------------------------------------------------------
+// 将HH:MM:SS转换为秒数，失败则返回0
+//---------------------------------------------------------
+Function formatTime(timeStr)
+    //TracePrint "Input time str: " & timeStr
+    If Len(timeStr) = 6 Then
+        Dim timeInS = CInt(Mid(timeStr, 1, 2))*60*60+CInt(Mid(timeStr, 3, 2)) * 60 + CInt(Mid(timeStr, 5, 2))
+        //TracePrint "Output time str: " & timeInS
+		
+        formatTime = timeInS
+    Else 
+        TracePrint "[ERROR] Can not format time, invalid time format: " & timeStr
+		formatTime = 0
+    End If
+End Function
+

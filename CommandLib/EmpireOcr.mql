@@ -1,0 +1,420 @@
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// 字体识别
+//
+//
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//加载自定义字库
+Import "CommUtil.mql"
+
+Dim fonts, fontLibMask
+
+Function testBinMap
+    //298,566,314,578
+    //288,157,339,170
+    Dim str = ocrNumber(298,566,314,578)
+    TracePrint "识别结果：" & str
+End Function
+
+Function ocrNumber(x1, y1, x2, y2)
+    ocrNumber = ocrNumber2(x1, y1, x2, y2, 0)
+End Function
+
+
+Function ocrNumber2(x1, y1, x2, y2, fontLib)
+    //loadFontLib
+    //loadFontLib()
+    ocrNumber2 = ""
+	
+    //提取二值化点阵（240,160,257,167）
+    //TracePrint "x1,y1,x2,y2:" & x1 & "," & y1 & "," & x2 & "," & y2
+    Dim result = capture2array(x1, y1, x2, y2, fontLib)
+    //TracePrint "二值化后的点阵" & CommUtil.Join2DimArray(result)
+	
+    //去顶部和底部
+    Dim allWords = fixExtra(result)
+    //TracePrint "去除顶部" & CommUtil.Join2DimArray(allWords)
+    If UBOUND(allWords) <= 1 Then 
+        TracePrint "点阵内无汉字"
+        Exit Function
+    End If
+	
+    //字切割
+    Dim wordsPos = splitWords(allWords)
+    If Not (IsArray(wordsPos(0))) Then 
+        //TracePrint "空白"
+        Exit Function
+    End If
+	
+    //TracePrint "分割位置" & CommUtil.Join2DimArray(wordsPos)
+	
+    //文字比对识别
+    Dim resultStr = customOcr(allWords, wordsPos)
+    //TracePrint "识别结果：" & resultStr
+	
+    ocrNumber2 = resultStr
+End Function
+
+Function customOcr(allWords, wordsPos)
+	
+    ////开始列，结束列，点阵数量
+    //点阵高度
+    Dim height = CStr(UBound(allWords(0)) + 1)
+    Dim result = ""
+    For i = 0 To UBOUND(wordsPos)
+        //00001100000000101000000110010000011111111000000001000000,4,16,8;
+        Dim oneChr = ""
+        Dim maxDifSize = Round(wordsPos(i, 2) * 0.1 + 0.4)
+        //TracePrint "点阵高度和点阵个数对比：" & height & "," & maxDifSize
+		
+        For j = 0 To UBOUND(fonts)
+            //TracePrint "当前字体对比：" & fonts(j, 3) & "," & Abs(wordsPos(i, 2) - fonts(j, 2))
+            //TracePrint "xxxx:" & CStr(fonts(j, 3) = height) & ", " & Cstr(Abs(wordsPos(i, 2) - fonts(j, 2)) <= maxDifSize)
+            If fonts(j, 3) = height And (Abs(wordsPos(i, 2) - fonts(j, 2)) <= maxDifSize)  Then 
+                //TracePrint "点阵对比:" & Join(fonts(j),",")
+                Dim ratio = 1
+                If fonts(j, 1) = "6" or fonts(j, 1) = "8" Then 
+                    ratio = 0.5
+                End If
+				
+                Dim difSize = 0,sn = 0
+                For x = wordsPos(i, 0) To wordsPos(i, 1)
+                    For y = 0 To UBOUND(allWords(x))
+                        //TracePrint "比较字符" & allWords(x, y) & ":" & Mid(fonts(j, 0), sn*height+y+1,1)
+                        //字库中的点阵固定11高度
+                        If CStr(allWords(x, y)) <> Mid(fonts(j, 0), sn*11+y+1,1) Then 
+                            //TracePrint "333333"
+                            difSize = difSize + 1
+                            If difSize > maxDifSize*ratio Then 
+                                //TracePrint "超过差异数量退出Y轴"
+                                Exit For	
+                            End If
+                        End If
+                    Next
+					
+                    If difSize > maxDifSize*ratio Then 
+                        //TracePrint "超过差异数量退出X轴"
+                        Exit For
+                    End If
+					
+                    sn = sn + 1
+                Next
+				
+                If difSize <= maxDifSize*ratio Then 
+                    //TracePrint "匹配成功：" & fonts(j, 1)
+                    oneChr = fonts(j, 1)
+                    Exit For
+                End If
+            End If
+        Next
+		
+        result = result & oneChr
+    Next
+	
+    customOcr = result
+End Function
+
+Function fixExtra(data)
+    Dim startRow = 0, endRow = UBOUND(data(0))
+    Dim result = Array(UBOUND(data) + 1)
+	
+    //data
+    //TracePrint "二值化后的点阵" & CommUtil.Join2DimArray(data)
+    For y = 0 To UBOUND(data(0))
+        Dim emptyRow = True
+        For x = 0 To UBOUND(data)
+            //TracePrint "data[" & x & ", " & y &"]=" & data(x, y)
+            If data(x, y) = 1 Then 
+                emptyRow = False
+                Exit For
+            End If
+        Next
+    	
+        If emptyRow Then 
+            If y <= startRow Then 
+                //TracePrint "xxxx" & startRow & ", " & y
+                startRow = y + 1
+            ElseIf y - startRow >= 8 Then
+                endRow = y - 1
+                Exit For
+            End If
+        Else 
+
+        End If
+    Next
+	
+    //TracePrint "xxxx" & startRow & "_" & endRow
+	
+    Dim size = endRow-startRow+1
+    For x = 0 To UBOUND(data)
+        Dim col = Array(size)
+        For y = 0 To size - 1
+            col(y) = data(x, y+startRow)
+        Next
+        result(x) = col
+    Next
+	
+    fixExtra = result
+	
+End Function
+
+//文字分割
+Function splitWords(data)
+    Dim size=-1, words = Array(5), beginFlag = False, i, j, count=0
+    words(0) = Array(0, -1, 0)
+
+    If UBOUND(data) = 0 Then 
+        splitWords = ""
+        TracePrint "空内容"
+        Exit Function
+    End If
+
+    //data
+    For i = 0 To UBOUND(data)
+        Dim emptyCol = True
+        For j = 0 To UBound(data(i)) 
+            If data(i, j) = 1 Then 
+                emptyCol = False
+                count = count+1
+            End If
+        Next
+    	
+        Dim tmpCnt
+        If emptyCol Then 
+            If beginFlag Then
+                words(size, 1) = i - 1
+                words(size, 2) = count
+    			
+                //exception for 4
+                If i - words(size, 0) > 7 Then 
+    				
+                    If  i - words(size, 0) >= 13 Then
+                        //tow 11, 12: 13,14
+                        words(size, 1) = i-8
+                        tmpCnt = 0
+                        For m = words(size, 0) to words(size, 1)
+                            For n = 0 To UBound(data(m))
+                                If data(m, n) = 1 Then 
+                                    tmpCnt = tmpCnt+1
+                                End If
+                            Next
+                        Next
+                        words(size, 2) = tmpCnt
+                        size = size + 1
+                        words(size) = Array(i, i - 1, 0)
+                        words(size, 0) = i-7
+                    ElseIf i - words(size, 0) >= 11 Then 
+                        //右到左，优先保留右边足够6
+                        words(size, 1) = i-7
+                        tmpCnt = 0
+                        For m = words(size, 0) to words(size, 1)
+                            For n = 0 To UBound(data(m))
+                                If data(m, n) = 1 Then 
+                                    tmpCnt = tmpCnt+1
+                                End If
+                            Next
+                        Next
+                        words(size, 2) = tmpCnt
+                        size = size + 1
+                        words(size) = Array(i, i - 1, 0)
+                        words(size, 0) = i-6
+                    Else 
+                        words(size, 0) = i-6
+                    End If
+    				
+    				
+                    tmpCnt = 0
+                    For m = words(size, 0) to i-1
+                        For n = 0 To UBound(data(m))
+                            If data(m, n) = 1 Then 
+                                tmpCnt = tmpCnt+1
+                            End If
+                        Next
+                    Next
+                    words(size, 2) = tmpCnt
+                End If
+    			
+                beginFlag = False
+                count = 0
+            End If 
+        Else 
+            If not(beginFlag) Then
+                beginFlag = True
+                size = size + 1
+                words(size) = Array(i, -1, 0)
+            End If
+        End If
+    Next
+	
+    If UBOUND(words)>0 And words(size, 1) = -1 Then 
+        words(size, 1) = UBOUND(data)
+        words(size, 2) = count
+    End If
+	
+    Dim result = Array(size+1)
+    For i = 0 To size 
+        result(i) = words(i)
+    Next
+	
+    splitWords = result
+End Function
+
+//快照抓换到数组中
+Function capture2array(x1, y1, x2, y2, fontLib)
+    Dim lenX = x2-x1
+    Dim lenY = y2-y1
+    Dim result = array(lenX+1),i,j
+    Dim capResult = CommUtil.capKeepMem(0)
+	
+    //按照列抓取
+    For i = 0 To lenX
+        Dim tmp = array(lenY+1)
+        For j = 0 To lenY 
+            //抓取点，并进行二值化处理
+            //TracePrint "x, y=>" & (x1+i) & (y1+j)
+            tmp(j) = color2gray(GetPixelColor(x1 + i, y1 + j), fontLib)
+        Next
+        result(i)=tmp
+    Next
+	
+    If capResult Then 
+        CommUtil.capRealseMem
+    End If
+	
+    capture2array = result
+End Function
+
+
+//二值化处理 grayMaskArray
+Function initGrayColor(mask)
+	
+    fontLibMask = Array(UBOUND(mask) + 1)
+	
+    For libIndex = 0 To UBOUND(mask)
+        //Dim mask = "495A6B-202020|2A3748-303030|667B8C-101010"
+        Dim tmp1 = Split(mask(libIndex), "|")
+        Dim fontMaskColors = Array(UBOUND(tmp1))
+		
+		
+        For i = 0 To UBOUND(tmp1) Step 1
+            Dim r1,r2,b1,b2,g1,g2
+            Dim tmp2 = Split(tmp1(i),"-")
+            ColorToRGB tmp2(0), r1, g1, b1
+            ColorToRGB tmp2(1), r2, g2, b2
+			
+            //TracePrint "xxx" & tmp2(0) & tmp2(1)
+            //TracePrint "yyy:" &r1&g1&b1&r2&g2&b2
+			
+            fontMaskColors(i) = Array(r1-r2, r1+r2, g1-g2, g1+g2, b1-b2, b1+b2)
+        Next
+		
+        fontLibMask(libIndex) = fontMaskColors
+        TracePrint "初始二值化信息：" & mask(libIndex) & "->" & CommUtil.Join2DimArray(fontLibMask(libIndex))
+    Next
+End Function
+
+Function color2gray(color, fontLib)
+    Dim R=0,G=0,B=0
+    color2gray = 0
+    ColorToRGB color, R, G, B
+	
+    //TracePrint "gray=>" & color & "[R:" & R & ",G:" & G & ",B:" & B & "]"
+    Dim grayMaskArray = fontLibMask(fontLib)
+    For i = 0 To UBOUND(grayMaskArray)
+        If R>grayMaskArray(i,0) And R<grayMaskArray(i,1) and _
+		 G>grayMaskArray(i,2) And G<grayMaskArray(i,3) and _
+		 B>grayMaskArray(i,4) And B<grayMaskArray(i,5) Then
+            color2gray = 1
+            Exit For
+        End If
+    Next
+End Function
+
+//加载字库
+Function loadFontLib
+    TracePrint "加载字库 "
+	
+
+    Dim line1 = "421022447C80E0$3$0.0.16$8#4310A2244C8610$2$0.0.16$8#0C0280907F8040$4$0.0.15$8#121A22444889E0$5$0.0.17$8#7E1222444884E0$6$0.0.19$8#200803FC0$1$0.0.10$8#3E1022044087E0$0$0.0.17$8#80106270500C00$7$0.0.12$8#6E1222444886E0$8$0.0.19$8#721122244487E0$9$0.0.19$8#421022444886E0$3$0.0.15$8#401FE0$1$0.0.9$8#400803FC0$1$0.0.10$8#4310E214448710$2$0.0.17$8#7B1122244483C0$9$0.0.19$8#80103A184C0E01000$7$0.0.15$10#77910A2144274C060$8$0.0.24$10#7C908A014224987C0$9$0.0.23$10#200803FF0$1$0.0.12$10#3F081201402C0C7F0$0$0.0.23$10#204C3A0D412844F08$2$0.0.22$10#210C1201442884EF0$3$0.0.20$10#0301A044308FFC020$4$0.0.21$10#1E0CF2214428849F0$6$0.0.25$10#39990A014428C80E0$5$0.0.21$10#030E9221442884EF0$8$0.0.23$10#60D02A09422584608$2$0.0.20$10#61900A21442748060$3$0.0.19$10#0300A064108FFC020040$4$0.0.21$10#7F990A21442CCC0E0$6$0.0.27$10#011F1A214828851F0080$5$0.0.24$10#38099A11402844FF0$9$0.0.24$10#8010020F470B01800$7$0.0.16$10#7F981A014026087E0$0$0.0.25$10#8010E260700800$7$0.0.12$8#200803FE0$1$0.0.11$9#61905212464788$2$0.0.19$9#411012224C4670$3$0.0.16$9#411012224C47F0$3$0.0.18$9#02014048210FF8040$4$0.0.17$9#F99212424848F0$5$0.0.21$9#091D12424848980C0$5$0.0.19$9#791212424848F0$5$0.0.19$9#7F1012424844F0$6$0.0.20$9#80107230500C00$7$0.0.12$9#671312024C4670$8$0.0.20$9#791092124047E0$9$0.0.19$9#3E101202404770$0$0.0.17$9#7F1012024043E0$0$0.0.18$9#41905212464508$2$0.0.16$9#200003FE0$1$0.0.10$9#271B1222444750$8$0.0.20$9#060240887FC020$4$0.0.16$9#3E091242484490$6$0.0.17$9#80101238580C00$7$0.0.12$9#791092124247B0$9$0.0.20$9#070702000$/$0.0.7$8#27131202444750$8$0.0.18$9#E0921242448060$5$0.0.15$9#3E1832024047F0$0$0.0.20$9#771312224C4670$8$0.0.22$9#3F0932424844D0$6$0.0.20$9#F31222444980C0$5$0.0.18$8#421862444C86F0$3$0.0.19$8#41186214448710$2$0.0.16$8#0C0381907F8040$4$0.0.17$8#021E62444889F0$5$0.0.19$8#3C0A42444885F0$6$0.0.19$8#8010223C580C00$7$0.0.13$8#061F62444886F0$8$0.0.21$8#321962244487E0$9$0.0.20$8#3C1C62044087E0$0$0.0.19$8#04038090220FF0080$4$0.0.17$8#0E0340887FC020040$4$0.0.19$9#411812224C47F8$3$0.0.20$9#3F193242484CF80C0$6$0.0.26$9#6E1222447C8060$8$0.0.19$8#411812224C47F8040$3$0.0.21$9#791992124247F0300$9$0.0.25$9#431012226C4670$3$0.0.18$9#7F1112424C44F0$6$0.0.22$9#7F1312226C4670$8$0.0.24$9#671B12224C47F8040$8$0.0.26$9#8010323C580C01000$7$0.0.15$9#3C0B62444885F0$6$0.0.21$8#431022447480E0$3$0.0.16$8#671B12224C4750$8$0.0.22$9"
+    //数组，
+    Dim fontStr = Split(line1, "#")
+	
+    //Dim fontFile = "Attachment:empire_new.txt"
+    //Dim fontStr = File.ReadLines(fontFile)
+    //脚本支持附件路径找图，格式为"Attachment:\图片名"，但是不支持直接读取TXT附件之类的，所以部分附件内容还是需要释放出来再使用。
+	
+    fonts = Array(UBOUND(fontStr)+1)
+    For i = 0 To UBOUND(fontStr)
+        Dim col = Split(fontStr(i), "$")
+        col(0) = hex2BinStr(col(0))
+        Dim points = Split(col(2), ".")
+        col(2) = CInt(points(2))
+        fonts(i) = col
+    Next
+	
+    TracePrint "字库加载完成： " & CommUtil.Join2DimArray(fonts)
+	
+	
+    Dim grayMaskStr = Array("495A6B-202020|2A3748-303030|667B8C-201510", "FFFFFF-202020|D8E5E3-151515|CCCDCE-151515", "15741B-202020|469359-202020")
+    initGrayColor (grayMaskStr)
+    
+    
+    TracePrint SetDictEx(0, "Attachment:empire_fond_lib_2.txt")
+    UseDict(0)
+End Function
+
+Function hex2BinStr(hexStr)
+    //TracePrint "解析字库:" & hexStr
+    Dim i,pos, size, binStr=""
+    size = Len(hexStr)
+    Dim binArray = Array(size*4)
+    For i = 0 To size - 1
+        //pos = CInt("&H" & Mid(hexStr, i + 1, 1))
+        //TracePrint "xxlll:" & CInt("&HA") & "==" & Mid(hexStr, i + 1, 1) &pos
+		
+        binStr = binStr & toBinStr(Mid(hexStr, i + 1, 1))
+		
+    Next
+    hex2BinStr = binStr
+End Function
+
+
+Function toBinStr(chrStr)
+    Select Case chrStr
+    Case "0"
+        toBinStr = "0000"
+    Case "1"
+        toBinStr = "0001"
+    Case "2"
+        toBinStr = "0010"
+    Case "3"
+        toBinStr = "0011"
+    Case "4"
+        toBinStr = "0100"
+    Case "5"
+        toBinStr = "0101"
+    Case "6"
+        toBinStr = "0110"
+    Case "7"
+        toBinStr = "0111"
+    Case "8"
+        toBinStr = "1000"
+    Case "9"
+        toBinStr = "1001"
+    Case "A"
+        toBinStr = "1010"
+    Case "B"
+        toBinStr = "1011"
+    Case "C"
+        toBinStr = "1100"
+    Case "D"
+        toBinStr = "1101"
+    Case "E"
+        toBinStr = "1110"
+    Case "F"
+        toBinStr = "1111"
+    Case Else
+        toBinStr = "0000"
+    End Select
+	
+	
+End Function
