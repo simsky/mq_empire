@@ -1,9 +1,9 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// å­—ä½“è¯†åˆ«
+// ×ÖÌåÊ¶±ğ
 //
 //
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//åŠ è½½è‡ªå®šä¹‰å­—åº“
+//¼ÓÔØ×Ô¶¨Òå×Ö¿â
 Import "CommUtil.mql"
 
 Dim fonts, fontLibMask
@@ -12,7 +12,7 @@ Function testBinMap
     //298,566,314,578
     //288,157,339,170
     Dim str = ocrNumber(298,566,314,578)
-    TracePrint "è¯†åˆ«ç»“æœï¼š" & str
+    TracePrint("Ê¶±ğ½á¹û£º" & str)
 End Function
 
 Function ocrNumber(x1, y1, x2, y2)
@@ -25,52 +25,52 @@ Function ocrNumber2(x1, y1, x2, y2, fontLib)
     //loadFontLib()
     ocrNumber2 = ""
 	
-    //æå–äºŒå€¼åŒ–ç‚¹é˜µï¼ˆ240,160,257,167ï¼‰
+    //ÌáÈ¡¶şÖµ»¯µãÕó£¨240,160,257,167£©
     //TracePrint "x1,y1,x2,y2:" & x1 & "," & y1 & "," & x2 & "," & y2
     Dim result = capture2array(x1, y1, x2, y2, fontLib)
-    //TracePrint "äºŒå€¼åŒ–åçš„ç‚¹é˜µ" & CommUtil.Join2DimArray(result)
+    //TracePrint "¶şÖµ»¯ºóµÄµãÕó" & CommUtil.Join2DimArray(result)
 	
-    //å»é¡¶éƒ¨å’Œåº•éƒ¨
+    //È¥¶¥²¿ºÍµ×²¿
     Dim allWords = fixExtra(result)
-    //TracePrint "å»é™¤é¡¶éƒ¨" & CommUtil.Join2DimArray(allWords)
+    //TracePrint "È¥³ı¶¥²¿" & CommUtil.Join2DimArray(allWords)
     If UBOUND(allWords) <= 1 Then 
-        TracePrint "ç‚¹é˜µå†…æ— æ±‰å­—"
+        TracePrint "µãÕóÄÚÎŞºº×Ö"
         Exit Function
     End If
 	
-    //å­—åˆ‡å‰²
+    //×ÖÇĞ¸î
     Dim wordsPos = splitWords(allWords)
     If Not (IsArray(wordsPos(0))) Then 
-        //TracePrint "ç©ºç™½"
+        //TracePrint "¿Õ°×"
         Exit Function
     End If
 	
-    //TracePrint "åˆ†å‰²ä½ç½®" & CommUtil.Join2DimArray(wordsPos)
+    //TracePrint "·Ö¸îÎ»ÖÃ" & CommUtil.Join2DimArray(wordsPos)
 	
-    //æ–‡å­—æ¯”å¯¹è¯†åˆ«
+    //ÎÄ×Ö±È¶ÔÊ¶±ğ
     Dim resultStr = customOcr(allWords, wordsPos)
-    //TracePrint "è¯†åˆ«ç»“æœï¼š" & resultStr
+    //TracePrint "Ê¶±ğ½á¹û£º" & resultStr
 	
     ocrNumber2 = resultStr
 End Function
 
 Function customOcr(allWords, wordsPos)
 	
-    ////å¼€å§‹åˆ—ï¼Œç»“æŸåˆ—ï¼Œç‚¹é˜µæ•°é‡
-    //ç‚¹é˜µé«˜åº¦
+    ////¿ªÊ¼ÁĞ£¬½áÊøÁĞ£¬µãÕóÊıÁ¿
+    //µãÕó¸ß¶È
     Dim height = CStr(UBound(allWords(0)) + 1)
     Dim result = ""
     For i = 0 To UBOUND(wordsPos)
         //00001100000000101000000110010000011111111000000001000000,4,16,8;
         Dim oneChr = ""
         Dim maxDifSize = Round(wordsPos(i, 2) * 0.1 + 0.4)
-        //TracePrint "ç‚¹é˜µé«˜åº¦å’Œç‚¹é˜µä¸ªæ•°å¯¹æ¯”ï¼š" & height & "," & maxDifSize
+        //TracePrint "µãÕó¸ß¶ÈºÍµãÕó¸öÊı¶Ô±È£º" & height & "," & maxDifSize
 		
         For j = 0 To UBOUND(fonts)
-            //TracePrint "å½“å‰å­—ä½“å¯¹æ¯”ï¼š" & fonts(j, 3) & "," & Abs(wordsPos(i, 2) - fonts(j, 2))
+            //TracePrint "µ±Ç°×ÖÌå¶Ô±È£º" & fonts(j, 3) & "," & Abs(wordsPos(i, 2) - fonts(j, 2))
             //TracePrint "xxxx:" & CStr(fonts(j, 3) = height) & ", " & Cstr(Abs(wordsPos(i, 2) - fonts(j, 2)) <= maxDifSize)
             If fonts(j, 3) = height And (Abs(wordsPos(i, 2) - fonts(j, 2)) <= maxDifSize)  Then 
-                //TracePrint "ç‚¹é˜µå¯¹æ¯”:" & Join(fonts(j),",")
+                //TracePrint "µãÕó¶Ô±È:" & Join(fonts(j),",")
                 Dim ratio = 1
                 If fonts(j, 1) = "6" or fonts(j, 1) = "8" Then 
                     ratio = 0.5
@@ -79,20 +79,20 @@ Function customOcr(allWords, wordsPos)
                 Dim difSize = 0,sn = 0
                 For x = wordsPos(i, 0) To wordsPos(i, 1)
                     For y = 0 To UBOUND(allWords(x))
-                        //TracePrint "æ¯”è¾ƒå­—ç¬¦" & allWords(x, y) & ":" & Mid(fonts(j, 0), sn*height+y+1,1)
-                        //å­—åº“ä¸­çš„ç‚¹é˜µå›ºå®š11é«˜åº¦
+                        //TracePrint "±È½Ï×Ö·û" & allWords(x, y) & ":" & Mid(fonts(j, 0), sn*height+y+1,1)
+                        //×Ö¿âÖĞµÄµãÕó¹Ì¶¨11¸ß¶È
                         If CStr(allWords(x, y)) <> Mid(fonts(j, 0), sn*11+y+1,1) Then 
                             //TracePrint "333333"
                             difSize = difSize + 1
                             If difSize > maxDifSize*ratio Then 
-                                //TracePrint "è¶…è¿‡å·®å¼‚æ•°é‡é€€å‡ºYè½´"
+                                //TracePrint "³¬¹ı²îÒìÊıÁ¿ÍË³öYÖá"
                                 Exit For	
                             End If
                         End If
                     Next
 					
                     If difSize > maxDifSize*ratio Then 
-                        //TracePrint "è¶…è¿‡å·®å¼‚æ•°é‡é€€å‡ºXè½´"
+                        //TracePrint "³¬¹ı²îÒìÊıÁ¿ÍË³öXÖá"
                         Exit For
                     End If
 					
@@ -100,7 +100,7 @@ Function customOcr(allWords, wordsPos)
                 Next
 				
                 If difSize <= maxDifSize*ratio Then 
-                    //TracePrint "åŒ¹é…æˆåŠŸï¼š" & fonts(j, 1)
+                    //TracePrint "Æ¥Åä³É¹¦£º" & fonts(j, 1)
                     oneChr = fonts(j, 1)
                     Exit For
                 End If
@@ -118,7 +118,7 @@ Function fixExtra(data)
     Dim result = Array(UBOUND(data) + 1)
 	
     //data
-    //TracePrint "äºŒå€¼åŒ–åçš„ç‚¹é˜µ" & CommUtil.Join2DimArray(data)
+    //TracePrint "¶şÖµ»¯ºóµÄµãÕó" & CommUtil.Join2DimArray(data)
     For y = 0 To UBOUND(data(0))
         Dim emptyRow = True
         For x = 0 To UBOUND(data)
@@ -157,14 +157,14 @@ Function fixExtra(data)
 	
 End Function
 
-//æ–‡å­—åˆ†å‰²
+//ÎÄ×Ö·Ö¸î
 Function splitWords(data)
     Dim size=-1, words = Array(5), beginFlag = False, i, j, count=0
     words(0) = Array(0, -1, 0)
 
     If UBOUND(data) = 0 Then 
         splitWords = ""
-        TracePrint "ç©ºå†…å®¹"
+        TracePrint "¿ÕÄÚÈİ"
         Exit Function
     End If
 
@@ -203,7 +203,7 @@ Function splitWords(data)
                         words(size) = Array(i, i - 1, 0)
                         words(size, 0) = i-7
                     ElseIf i - words(size, 0) >= 11 Then 
-                        //å³åˆ°å·¦ï¼Œä¼˜å…ˆä¿ç•™å³è¾¹è¶³å¤Ÿ6
+                        //ÓÒµ½×ó£¬ÓÅÏÈ±£ÁôÓÒ±ß×ã¹»6
                         words(size, 1) = i-7
                         tmpCnt = 0
                         For m = words(size, 0) to words(size, 1)
@@ -258,18 +258,18 @@ Function splitWords(data)
     splitWords = result
 End Function
 
-//å¿«ç…§æŠ“æ¢åˆ°æ•°ç»„ä¸­
+//¿ìÕÕ×¥»»µ½Êı×éÖĞ
 Function capture2array(x1, y1, x2, y2, fontLib)
     Dim lenX = x2-x1
     Dim lenY = y2-y1
     Dim result = array(lenX+1),i,j
     Dim capResult = CommUtil.capKeepMem(0)
 	
-    //æŒ‰ç…§åˆ—æŠ“å–
+    //°´ÕÕÁĞ×¥È¡
     For i = 0 To lenX
         Dim tmp = array(lenY+1)
         For j = 0 To lenY 
-            //æŠ“å–ç‚¹ï¼Œå¹¶è¿›è¡ŒäºŒå€¼åŒ–å¤„ç†
+            //×¥È¡µã£¬²¢½øĞĞ¶şÖµ»¯´¦Àí
             //TracePrint "x, y=>" & (x1+i) & (y1+j)
             tmp(j) = color2gray(GetPixelColor(x1 + i, y1 + j), fontLib)
         Next
@@ -284,7 +284,7 @@ Function capture2array(x1, y1, x2, y2, fontLib)
 End Function
 
 
-//äºŒå€¼åŒ–å¤„ç† grayMaskArray
+//¶şÖµ»¯´¦Àí grayMaskArray
 Function initGrayColor(mask)
 	
     fontLibMask = Array(UBOUND(mask) + 1)
@@ -308,7 +308,7 @@ Function initGrayColor(mask)
         Next
 		
         fontLibMask(libIndex) = fontMaskColors
-        TracePrint "åˆå§‹äºŒå€¼åŒ–ä¿¡æ¯ï¼š" & mask(libIndex) & "->" & CommUtil.Join2DimArray(fontLibMask(libIndex))
+        TracePrint "³õÊ¼¶şÖµ»¯ĞÅÏ¢£º" & mask(libIndex) & "->" & CommUtil.Join2DimArray(fontLibMask(libIndex))
     Next
 End Function
 
@@ -329,18 +329,18 @@ Function color2gray(color, fontLib)
     Next
 End Function
 
-//åŠ è½½å­—åº“
+//¼ÓÔØ×Ö¿â
 Function loadFontLib
-    TracePrint "åŠ è½½å­—åº“ "
+    TracePrint "¼ÓÔØ×Ö¿â "
 	
 
     Dim line1 = "421022447C80E0$3$0.0.16$8#4310A2244C8610$2$0.0.16$8#0C0280907F8040$4$0.0.15$8#121A22444889E0$5$0.0.17$8#7E1222444884E0$6$0.0.19$8#200803FC0$1$0.0.10$8#3E1022044087E0$0$0.0.17$8#80106270500C00$7$0.0.12$8#6E1222444886E0$8$0.0.19$8#721122244487E0$9$0.0.19$8#421022444886E0$3$0.0.15$8#401FE0$1$0.0.9$8#400803FC0$1$0.0.10$8#4310E214448710$2$0.0.17$8#7B1122244483C0$9$0.0.19$8#80103A184C0E01000$7$0.0.15$10#77910A2144274C060$8$0.0.24$10#7C908A014224987C0$9$0.0.23$10#200803FF0$1$0.0.12$10#3F081201402C0C7F0$0$0.0.23$10#204C3A0D412844F08$2$0.0.22$10#210C1201442884EF0$3$0.0.20$10#0301A044308FFC020$4$0.0.21$10#1E0CF2214428849F0$6$0.0.25$10#39990A014428C80E0$5$0.0.21$10#030E9221442884EF0$8$0.0.23$10#60D02A09422584608$2$0.0.20$10#61900A21442748060$3$0.0.19$10#0300A064108FFC020040$4$0.0.21$10#7F990A21442CCC0E0$6$0.0.27$10#011F1A214828851F0080$5$0.0.24$10#38099A11402844FF0$9$0.0.24$10#8010020F470B01800$7$0.0.16$10#7F981A014026087E0$0$0.0.25$10#8010E260700800$7$0.0.12$8#200803FE0$1$0.0.11$9#61905212464788$2$0.0.19$9#411012224C4670$3$0.0.16$9#411012224C47F0$3$0.0.18$9#02014048210FF8040$4$0.0.17$9#F99212424848F0$5$0.0.21$9#091D12424848980C0$5$0.0.19$9#791212424848F0$5$0.0.19$9#7F1012424844F0$6$0.0.20$9#80107230500C00$7$0.0.12$9#671312024C4670$8$0.0.20$9#791092124047E0$9$0.0.19$9#3E101202404770$0$0.0.17$9#7F1012024043E0$0$0.0.18$9#41905212464508$2$0.0.16$9#200003FE0$1$0.0.10$9#271B1222444750$8$0.0.20$9#060240887FC020$4$0.0.16$9#3E091242484490$6$0.0.17$9#80101238580C00$7$0.0.12$9#791092124247B0$9$0.0.20$9#070702000$/$0.0.7$8#27131202444750$8$0.0.18$9#E0921242448060$5$0.0.15$9#3E1832024047F0$0$0.0.20$9#771312224C4670$8$0.0.22$9#3F0932424844D0$6$0.0.20$9#F31222444980C0$5$0.0.18$8#421862444C86F0$3$0.0.19$8#41186214448710$2$0.0.16$8#0C0381907F8040$4$0.0.17$8#021E62444889F0$5$0.0.19$8#3C0A42444885F0$6$0.0.19$8#8010223C580C00$7$0.0.13$8#061F62444886F0$8$0.0.21$8#321962244487E0$9$0.0.20$8#3C1C62044087E0$0$0.0.19$8#04038090220FF0080$4$0.0.17$8#0E0340887FC020040$4$0.0.19$9#411812224C47F8$3$0.0.20$9#3F193242484CF80C0$6$0.0.26$9#6E1222447C8060$8$0.0.19$8#411812224C47F8040$3$0.0.21$9#791992124247F0300$9$0.0.25$9#431012226C4670$3$0.0.18$9#7F1112424C44F0$6$0.0.22$9#7F1312226C4670$8$0.0.24$9#671B12224C47F8040$8$0.0.26$9#8010323C580C01000$7$0.0.15$9#3C0B62444885F0$6$0.0.21$8#431022447480E0$3$0.0.16$8#671B12224C4750$8$0.0.22$9"
-    //æ•°ç»„ï¼Œ
+    //Êı×é£¬
     Dim fontStr = Split(line1, "#")
 	
     //Dim fontFile = "Attachment:empire_new.txt"
     //Dim fontStr = File.ReadLines(fontFile)
-    //è„šæœ¬æ”¯æŒé™„ä»¶è·¯å¾„æ‰¾å›¾ï¼Œæ ¼å¼ä¸º"Attachment:\å›¾ç‰‡å"ï¼Œä½†æ˜¯ä¸æ”¯æŒç›´æ¥è¯»å–TXTé™„ä»¶ä¹‹ç±»çš„ï¼Œæ‰€ä»¥éƒ¨åˆ†é™„ä»¶å†…å®¹è¿˜æ˜¯éœ€è¦é‡Šæ”¾å‡ºæ¥å†ä½¿ç”¨ã€‚
+    //½Å±¾Ö§³Ö¸½¼şÂ·¾¶ÕÒÍ¼£¬¸ñÊ½Îª"Attachment:\Í¼Æ¬Ãû"£¬µ«ÊÇ²»Ö§³ÖÖ±½Ó¶ÁÈ¡TXT¸½¼şÖ®ÀàµÄ£¬ËùÒÔ²¿·Ö¸½¼şÄÚÈİ»¹ÊÇĞèÒªÊÍ·Å³öÀ´ÔÙÊ¹ÓÃ¡£
 	
     fonts = Array(UBOUND(fontStr)+1)
     For i = 0 To UBOUND(fontStr)
@@ -351,7 +351,7 @@ Function loadFontLib
         fonts(i) = col
     Next
 	
-    TracePrint "å­—åº“åŠ è½½å®Œæˆï¼š " & CommUtil.Join2DimArray(fonts)
+    TracePrint "×Ö¿â¼ÓÔØÍê³É£º " & CommUtil.Join2DimArray(fonts)
 	
 	
     Dim grayMaskStr = Array("495A6B-202020|2A3748-303030|667B8C-201510", "FFFFFF-202020|D8E5E3-151515|CCCDCE-151515", "15741B-202020|469359-202020")
@@ -363,7 +363,7 @@ Function loadFontLib
 End Function
 
 Function hex2BinStr(hexStr)
-    //TracePrint "è§£æå­—åº“:" & hexStr
+    //TracePrint "½âÎö×Ö¿â:" & hexStr
     Dim i,pos, size, binStr=""
     size = Len(hexStr)
     Dim binArray = Array(size*4)

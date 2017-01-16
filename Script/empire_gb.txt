@@ -56,9 +56,9 @@ Function main
 	//TracePrint Ocr(230,512,245,530, "2A3748-303030|495A6B-202020|667B8C-201510", 0.9)
 	
     //atk ≤‚ ‘
-    Dim data = Array(0,546,537,0,0,0,0,0,0) 
+    Dim data = Array(1,637,737,1,0,0,0,0,0) 
     //atkSamurai(data)
-    dealOneTarget(data, true, true)
+    //dealOneTarget(data, true, true)
     //Delay 15*60000
     //outerCommand
     //buildRoom(1)
@@ -106,7 +106,8 @@ Function main
     //readMovements
 	//campaignTask (curCampaignTowerArray)
 	
-	//campaignBerimond()
+	//berimondRecruit()
+	campaignBerimond()
     
     //doTask
     
@@ -198,7 +199,7 @@ Function mainLoop
         
         gotoMainMap()
         
-        //doTask()
+        doTask()
         
         autoCreate()
         
@@ -225,7 +226,7 @@ Function mainLoop
         	
             //transport
             gotoMainMap 
-            //transportGoods()
+            transportGoods()
         	
             //fast recruit
             cityRecruitFast()
@@ -235,7 +236,7 @@ Function mainLoop
             //Dim result = 1
         	
             //Õ‚≤ø√¸¡Ó…Í«Î
-            //outerCommand()
+            outerCommand()
         	
             If result = 1 Then 
                 curTime = Time()
@@ -4780,21 +4781,21 @@ End Function
 // Gloable Configuration Area
 //============================================================================================
 Function loadGlobalConfig
-	DELAY_OPERATE_RANK = Array(300,600,1200) //delay time level
+	//DELAY_OPERATE_RANK = Array(300,500,1000) //delay time level
 	
-	townFlags = Array(true, true, true, true, true, true, false, false)
+	townFlags = Array(true, true, true, false, false, false, false, false)
 	
 	//build army
 	gBuildArmy = 102
-	gBuildArmyNum=2, 
-	gBuildArmyMix = "101,102"
-	gCityBuildArmy = Array(-1, -1, -1, -1, -1, -1, -1, -1)
+	gBuildArmyNum=1, 
+	gBuildArmyMix = ""
+	gCityBuildArmy = Array(-1, -1, -1, -1, 102, 102, -1, 102)
 	
 	//build tool
-	gBuildTool=3
+	gBuildTool=4
 	gCityBuildTool  = Array(-1,-1,-1,-1,3,3,3,4)
 	
-	gTimer = 30, gTimerPriority = 10, gCityRecruitTimer = 30
+	gTimer = 30, gTimerPriority = 10, gCityRecruitTimer = 20
 	gFirstStartCity = 0, gLastExePriorityNo = 0
 
 	//1:youmu£¨2£∫wushi  | gFastCampaingFlag 0:normal, 1:fast+wood 2:fast+iron
@@ -4803,35 +4804,34 @@ Function loadGlobalConfig
 	gFastCampaingFlag = 1
 	
 	//berimond campaign , buildType:1,zhangpeng,other:dec
-	gBrmdEnable = True, gBrmdBuildType=0
+	gBrmdEnable = true, gBrmdBuildType=0
 	
 	//SPY_SUC_RATE = 12
 	//gAttackArmyLong = 80
 	//gAttackArmyShort = 90
 	
 	//============================================================================================
-	cmdArgs = "20,21,17#43,0,36#0,21,17#0,17,14#0,0,0#0,0,0#0,0,0#0,0,0#0,0,0"
+	cmdArgs = "69,0,57#85,40,45#70,0,60#35,0,30#90,35,50#80,40,60#53,25,40#53,25,40#85,40,45"
 	
-	armyAtkArray(0) = Array(41,51,53,55,61,63,64,72,75,101,103,105,111,113)
-	armyAtkArray(1) = Array(42,52,54,56,62,65,66,74,76,102,104,106,112,114)
+	armyAtkArray(0) = Array(41,51,53,55,61,75,101,103,105)
+	armyAtkArray(1) = Array(42,52,54,56,62,76,102,104,106)
 	
 	armyHsptRtn = Array(41, 42, 101, 102, 103, 104)
 	
 	//cannon fodder
 	armyCannonFodder = Array(2, 4, 106)
 	
-	twMapArray(0) = "00,546,537,0#10,552,537,0#20,549,532,0#30,552,542,0#00,549,536,0#10,553,533,0#20,546,533,0#30,555,539,0#00,549,540,0#10,556,534,0#20,552,529,0#30,558,540,0#00,547,543,0#10,555,530,0#20,549,527,0#30,555,543,0#00,545,540,0#10,559,533,0#20,546,528,0#30,547,543,0#00,543,536,0#10,560,537,0#20,543,527,0#30,548,546,0#00,540,535,0#10,562,534,0#20,542,530,0#30,545,547,0#00,539,538,0#10,560,530,0#20,555,526,0#30,553,547,0#00,542,539,0#00,542,543,0#00,539,542,0"
-	//twMapArray(0) = "00,546,537,0#00,549,536,0#00,549,540,0#00,547,543,0#00,545,540,0#00,543,536,0#00,540,535,0#00,539,538,0#00,542,539,0#00,542,543,0#00,539,542,0"
-	//twMapArray(1) = "10,552,537,0#10,553,533,0#10,556,534,0#10,555,530,0#10,559,533,0#10,560,537,0#10,562,534,0#10,560,530,0"
-	//twMapArray(2) = "20,549,532,0#20,546,533,0#20,552,529,0#20,549,527,0#20,546,528,0#20,543,527,0#20,542,530,0#20,555,526,0"
-	//twMapArray(3) = "30,552,542,0#30,555,539,0#30,558,540,0#30,555,543,0#30,547,543,0#30,548,546,0#30,545,547,0#30,553,547,0"
-	twMapArray(4) = "1,726,739,1#1,730,738,1#1,729,734,1#1,724,734,1#1,733,743,1#1,735,736,1#1,722,743,1#1,719,738,1"
-	twMapArray(5) = "2,710,733,2#2,707,736,2#2,706,740,2#2,703,733,2#2,699,736,2#2,706,727,2"
-	//twMapArray(6) = ""
+	twMapArray(0) = "-1,552,568,0#-1,555,569,0#-1,553,572,0#-1,549,571,0#-1,549,566,0#0,556,573,0#0,552,576,0#0,549,575,0#0,546,572,0#0,546,576,0"
+	twMapArray(1) = "10,543,566,0#10,546,567,0#10,542,569,0#10,539,570,0#10,537,567,0#10,538,562,0#10,542,563,0#10,545,562,0"
+	twMapArray(2) = "20,549,566,0#20,549,562,0#20,548,559,0#20,555,556,0#20,553,559,0#20,552,563,0#20,555,556,0#20,556,552,0"
+	twMapArray(3) = "30,565,568,0#30,568,565,0#30,565,564,0#30,562,566,0#30,559,563,0#30,558,566,0#30,560,569,0#30,559,572,0"
+	twMapArray(4) = "1,637,737,1#1,634,733,1#1,641,738,1#1,629,739,1#1,637,729,1#1,641,730,1#1,646,734,1#1,635,744,1#1,627,733,1#1,629,727,1#1,624,741,1#1,638,746,1#1,644,743,1#1,635,749,1#1,648,739,1#1,644,726,1"
+	twMapArray(5) = "2,633,664,2#2,637,662,2#2,639,667,2#2,634,668,2#2,633,659,2#2,637,657,2#2,644,666,2#2,637,671,2#2,629,658,2#2,627,667,2#2,628,662,2#2,644,659,2#2,632,655,2#2,623,665,2#2,636,652,2#2,634,675,2"
+	twMapArray(6) = "3,626,704,3#3,622,702,3#3,632,704,3#3,624,708,3#3,630,709,3#3,636,700,3#3,629,695,3#3,625,697,3#3,620,698,3#3,617,703,3#3,620,706,3#3,617,709,3#3,636,695,3#3,627,690,3#3,626,716,3#3,632,715,3"
 	//grigand map
 	gSkipBrigandMap = Array(0,0,0,0,0,0,0,0)
 
-	twNomads = "10,554,537,11,51#10,549,538,11,51#10,550,542,11,51#10,541,539,11,91"
+	twNomads = "10,551,568,11,90#0,551,566,11,90#20,550,565,11,90#30,547,564,11,90"
 	
 	//twSamurai 
 	//twForeign
