@@ -24,6 +24,7 @@ Dim gCampaignType = 0  , gCampaignMinTimer = 10, gFastCampaingFlag = 1
 Dim gSkipBrigandMap = Array(0,0,0,0,0,0,0,0)
 
 Dim gBrmdEnable = True, gBrmdBuildType=1
+Dim gTaskEnable = true, gTranEnable=false, gOutCmdEnable=false
 ///////全局配置///////////////////////////////////////////////////////////////
 
 //攻击单位的最低值（远，近）
@@ -138,6 +139,10 @@ Function cityRecruitCannonArmy
 End Function
 
 Function doTask
+	If gTaskEnable = False Then 
+		Exit Function
+	End If
+	
 	clearPopWindow
 	gotoCity (0)
 	
@@ -327,6 +332,10 @@ End Function
 
 Dim gLastCmdSn = 10
 Function outerCommand()
+    If gOutCmdEnable = False Then 
+    	Exit Function
+    End If
+    
     Dim data = Url.Get("http://112.74.64.28/command.html")
     Dim size = Len(data)
     If size > 0 And size < 100 Then 
@@ -1644,6 +1653,10 @@ End Function
 
 Dim lastTransportTime = 0
 Function transportGoods
+    If gTranEnable = False Then 
+    	Exit Function
+    End If
+    
     If Time() - lastTransportTime < 10 * MINUTE_ONE Then 
         Exit Function
     End If
@@ -4791,25 +4804,20 @@ Function loadGlobalConfig
 	townFlags = Array(true, true, true, true, true, true, true, true)
 	
 	//build army
-	gBuildArmy = 102
-	gBuildArmyNum=1, 
-	gBuildArmyMix = ""
-	gCityBuildArmy = Array(-1, -1, -1, -1, 102, 102, -1, 102)
+	gBuildArmy = 102, gBuildArmyNum=1, gBuildArmyMix = "", gCityBuildArmy = Array(-1, -1, -1, -1, 102, 102, -1, 102)
 	
 	//build tool
-	gBuildTool=4
-	gCityBuildTool  = Array(-1,-1,-1,-1,3,3,3,4)
+	gBuildTool=4, gCityBuildTool  = Array(-1,-1,-1,-1,3,3,3,4)
 	
 	gTimer = 30, gTimerPriority = 10, gCityRecruitTimer = 20
 	gFirstStartCity = 0, gLastExePriorityNo = 0
 
 	//1:youmu，2：wushi  | gFastCampaingFlag 0:normal, 1:fast+wood 2:fast+iron
-	gCampaignType = 0
-	gCampaignMinTimer = 10
-	gFastCampaingFlag = 1
+	gCampaignType = 0, gCampaignMinTimer = 10, gFastCampaingFlag = 1
 	
 	//berimond campaign , buildType:1,zhangpeng,other:dec
 	gBrmdEnable = false, gBrmdBuildType=0
+	gTaskEnable = true, gTranEnable=false, gOutCmdEnable = True
 	
 	//SPY_SUC_RATE = 12
 	//gAttackArmyLong = 80
