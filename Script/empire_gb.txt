@@ -115,7 +115,7 @@ Function main
     //cityRecruitCannonArmy 
 	
 	
-    mainLoop
+    //mainLoop
     //simpleLoop
 End Function
 
@@ -2198,7 +2198,11 @@ Function atkSideTurn(allAttackData)
 	
 	//LEFT
 	If allAttackData(SIDE_LEFT, ATK_DATA_FLAG) Then 
-		PictureUtil.tapPositionDelay(55, 326, DELAY_OPERATE_RANK(1))
+		result = PictureUtil.tapPicRegion(PictureUtil.getRegion(4, 1), "Attachment:battle_face_left.png", DELAY_OPERATE_RANK(1))
+		If result < 0 Then 
+			atkSideTurn = -1
+			TracePrint "[ERROR] "
+		End If
 		
 		result = attackAllocateAll(allAttackData(SIDE_LEFT))
     	If result <= 0 Then 
@@ -2208,12 +2212,22 @@ Function atkSideTurn(allAttackData)
         	atkSideTurn = 1
     	End If
 		
-		PictureUtil.tapPositionDelay(420, 326, DELAY_OPERATE_RANK(1))
+		result = PictureUtil.tapPicRegion(PictureUtil.getRegion(4, 2), "Attachment:battle_face_right.png", DELAY_OPERATE_RANK(1))
+		If result < 0 Then 
+			atkSideTurn = -1
+			TracePrint "[ERROR] "
+		End If
+		
 	End If
 	
 	//LEFT
 	If allAttackData(SIDE_RIGHT, ATK_DATA_FLAG) Then 
-		PictureUtil.tapPositionDelay 420, 326, DELAY_OPERATE_RANK(1)
+		result = PictureUtil.tapPicRegion(PictureUtil.getRegion(4, 2), "Attachment:battle_face_right.png", DELAY_OPERATE_RANK(1))
+		If result < 0 Then 
+			atkSideTurn = -1
+			TracePrint "[ERROR] "
+		End If
+		
 		result = attackAllocateAll(allAttackData(SIDE_RIGHT))
     	If result <= 0 Then 
         	atkSideTurn = result

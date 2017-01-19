@@ -1,6 +1,54 @@
 Dim screenX = GetScreenX(), screenY = GetScreenY()
 
 //---------------------------------------------------------
+// 获取区域分块的坐标区域
+// totalPieces等份数量， index：数量
+//---------------------------------------------------------
+Function getRegion(total, index)
+	TracePrint screenY
+	Dim temp = Array(0,0,0,0)
+	If total > 1 And index>0 Then 
+		Dim xNum, yNum, indexX, indexY
+		If total = 2 Then 
+			xNum = 1
+			yNum = 2
+			indexX = 0
+			indexY = index
+		Else 
+			xNum = 2
+			yNum = total / 2
+			indexX = (index - 1) Mod xNum
+			indexY=(index-1) \ yNum
+		End If
+		
+		Dim cellX = screenX/xNum
+		Dim cellY = screenY/yNum
+		
+		temp(0) = indexX * cellX
+		temp(1) = indexY * cellY
+		temp(2) = temp(0)+cellX
+		temp(3) = temp(1)+cellY
+		
+	End If
+	
+	TracePrint "region => " & temp(0) & "," & temp(1) & "," & temp(2) & "," & temp(3)
+	getRegion = temp
+End Function
+
+Function getRegionX(totalPieces, index)
+	Dim temp = Array(0,0,0,0)
+
+	
+	getRegionX = temp
+End Function
+
+Function getRegionY(totalPieces, index)
+	Dim temp = Array(0,0,0,0)
+
+	
+	getRegionY = temp
+End Function
+//---------------------------------------------------------
 // 全屏搜图
 // intXY 必须是数组
 //---------------------------------------------------------
@@ -37,6 +85,10 @@ Function findPicRegion(x1, y1, x2, y2, picName, intXY)
     End If
 End Function
 
+Function findPicRegion2(region, picName, intXY)
+    findPicRegion2 = findPicRegion(region(0),region(1),region(2),region(3),picName, intXY)
+End Function
+
 Function tapPositionDelay(x, y, delayTime)
     Tap x, y
     Delay delayTime
@@ -49,4 +101,22 @@ Function tapPositionTimes(x, y, times)
 	
     //TracePrint "tap:" & x & "," & y
     Delay 250
+End Function
+
+Function tapPic(picName)
+    Dim region = Array(0,0,0,0)
+	tapPic = tapPicRegion(region, picName, 50)
+End Function
+
+Function tapPicRegion(region, picName, delayTime)
+    tapPicRegion = False
+    Dim intXY = Array(2), result
+	result = findPicRegion2(region,  picName, intXY)
+    If result <> -1 Then 
+        tapPicRegion = True
+        Tap intXY(0), intXY(1)
+        Delay delayTime
+    Else 
+        TracePrint "Can not click picture: " & picName
+    End If
 End Function
