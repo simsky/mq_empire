@@ -57,9 +57,9 @@ Function main
 	//TracePrint Ocr(230,512,245,530, "2A3748-303030|495A6B-202020|667B8C-201510", 0.9)
 	
     //atk 测试
-    Dim data = Array(3,626,704,3,0,0,0,0,0) 
+    Dim data = Array(0,551,566,11,91,0,0,0,0) 
     //atkSamurai(data)
-    dealOneTarget(data, true, true)
+    //dealOneTarget(data, true, true)
     //Delay 15*60000
     //outerCommand
     //buildRoom(1)
@@ -103,9 +103,9 @@ Function main
 	
     //clearPopWindow
     
-    //gotoMainMap
-    //readMovements
-	//campaignTask (curCampaignTowerArray)
+    gotoMainMap
+    readMovements
+	campaignTask (curCampaignTowerArray)
 	
 	//berimondRecruit()
 	//campaignBerimond()
@@ -206,7 +206,7 @@ Function mainLoop
         
         doTask()
         
-        autoCreate()
+        //autoCreate()
         
         helpOther()
         
@@ -231,10 +231,10 @@ Function mainLoop
         	
             //transport
             gotoMainMap 
-            transportGoods()
+            //transportGoods()
         	
             //fast recruit
-            cityRecruitFast()
+            //cityRecruitFast()
         	
             gAtkLoopStartTime = atkStartTime
             Dim result = autoAtk (false)
@@ -324,8 +324,10 @@ Function buyTool(amount, type)
 	TracePrint Now() & " Buy Tools " & amount & ":" & picArray(0)
 	
 	For i = 1 to amount
-		If tapPic2(picArray, DELAY_OPERATE_RANK(1)) Then 
-			actionConfirm()
+		If tapPic2(picArray, DELAY_OPERATE_RANK(1)+100) Then 
+			actionConfirm 
+		Else 
+			actionCancle
 		End If
 	Next
 End Function
@@ -2007,24 +2009,24 @@ Function attackTarget(baseX, baseY, targetData)
         If targetData(TAGT_TYPE) = 11 And targetData(TAGT_LVL) = 91 Then 
         	TracePrint "==" & coolTime
         	if tapPicArea(0, 300, screenY, 500,"Attachment:bat_cd_refresh.png", DELAY_OPERATE_RANK(1)) Then
-        		Dim nonFlag1h=False, nonFlag30m=False, nonFlag10m=False, moveFlag30m=false,moveFlag10m=false, moveFlag5m=false
+        		Dim moveFlag30m=false,moveFlag10m=false, moveFlag5m=false
         		Delay DELAY_OPERATE_RANK(2)
-        		For n = 1 To 40
-        			If n=0 And coolTime > 18000 Then 
+        		For n = 1 To cdExeTimes
+        			If (cdToolsEnable(0)=True and n=1) And coolTime > cdToolsTime(0) Then 
         				FindPicArea2 0, 300, screenY, 500, "Attachment:bat_cd_refresh_24h.png|Attachment:bat_cd_refresh_24h_1.png"
         				TracePrint "find cd 24h =>" & intX & "," & intY
         				If intX > -1 Then 
         					tapPosition intX, intY + 100
         					coolTime = coolTime - 36000
         				End If
-        			ElseIf n=0 and coolTime > 14000 Then 
+        			ElseIf (cdToolsEnable(1)=True And n=1) and coolTime > cdToolsTime(1) Then 
         				FindPicArea2 0, 300, screenY, 500, "Attachment:bat_cd_refresh_5h.png|Attachment:bat_cd_refresh_5h_1.png"
         				TracePrint "find cd 5h =>" & intX & "," & intY
         				If intX > -1 Then 
         					tapPosition intX, intY + 100
         					coolTime = coolTime - 18000
         				End If
-        			ElseIf nonFlag1h=false and coolTime > 10800 Then
+        			ElseIf cdToolsEnable(2)=True and coolTime > cdToolsTime(2) Then
         				FindPicArea2 0, 300, screenY, 500, "Attachment:bat_cd_refresh_1h.png|Attachment:bat_cd_refresh_1h_1.png"
         				TracePrint "find cd 1h =>" & intX & "," & intY
         				If intX > -1 Then 
@@ -2032,10 +2034,10 @@ Function attackTarget(baseX, baseY, targetData)
         					coolTime = coolTime - 3600
         				Else 
         					tapPosition 40, 420
-        					nonFlag1h = True
+        					cdToolsEnable(2) = False
         					Delay DELAY_OPERATE_RANK(1)
         				End If
-        			ElseIf nonFlag30m=False And coolTime>3000 Then
+        			ElseIf cdToolsEnable(3)=true And coolTime>cdToolsTime(3) Then
         				FindPicArea2 0, 300, screenY, 500, "Attachment:bat_cd_refresh_30m.png|Attachment:bat_cd_refresh_30m_1.png"
         				TracePrint "find cd 30m =>" & intX & "," & intY
         				If intX > -1 Then 
@@ -2046,9 +2048,9 @@ Function attackTarget(baseX, baseY, targetData)
         					moveFlag30m = true
         					Delay DELAY_OPERATE_RANK(1)
         				Else 
-        					nonFlag30m = True
+        					cdToolsEnable(3) = False
         				End If
-        			ElseIf nonFlag10m=false and coolTime > 1200 Then
+        			ElseIf cdToolsEnable(4)=True and coolTime > cdToolsTime(4) Then
         				FindPicArea2 0, 300, screenY, 500, "Attachment:bat_cd_refresh_10m.png|Attachment:bat_cd_refresh_10m_1.png"
         				TracePrint "find cd 10m =>" & intX & "," & intY
         				If intX > -1 Then 
@@ -2059,7 +2061,7 @@ Function attackTarget(baseX, baseY, targetData)
         					moveFlag10m = true
         					Delay DELAY_OPERATE_RANK(1)
         				Else 
-        					nonFlag10m = True
+        					cdToolsEnable(4) = False
         					//Delay DELAY_OPERATE_RANK(1)
         				End If
         			Else
@@ -2938,21 +2940,21 @@ End Function
 Function atkNomads(targetData, allAttackData) 
     TracePrint "atkNomads:"
 
-    Dim fodderTimes = 0, atkTimes = 1, toolTimes = 1, targetType = targetData(TAGT_TYPE)
+    Dim fodderTimes = 0, atkTimes = ymAtkTimes, toolTimes = 1, targetType = targetData(TAGT_TYPE)
 	
     //Center+side
     //重新读取谍报
     Dim allTargetInfo
-    If targetData(TAGT_LVL) = 0 or targetData(TAGT_LVL) = 71 Then 
+    If targetData(TAGT_LVL) = 0 or targetData(TAGT_LVL) >= 81 Then 
     	//选择指挥官
-    	/*
+    	
     	If selectCommander(7) <> 7 Then 
         	If selectCommander(8) <> 8 and gFastCampaingFlag = 0 Then 
             	atkNomads = -100030
             	Exit Function
         	End If
     	End If
-    	*/
+    	
 		Delay 400
     
         allTargetInfo = readAllEnimyCity(targetData(TAGT_TYPE))
@@ -3008,11 +3010,13 @@ Function atkNomads(targetData, allAttackData)
     Dim sideIndex = SIDE_LEFT, baseIndex
     
     If allTargetInfo(SIDE_LEFT, DF_LONG) = 119 And allTargetInfo(SIDE_RIGHT, DF_LONG) = 119 And allTargetInfo(SIDE_CENTER, DF_LONG) > 169 Then 
+    	allTargetInfo(SIDE_LEFT, DF_PW_LONG) = 0
+    	allTargetInfo(SIDE_RIGHT, DF_PW_LONG) = 0
         
         allAttackData(SIDE_LEFT) = buildAtkDataLong(allTargetInfo, targetType, SIDE_LEFT, fodderTimes, atkTimes, toolTimes, SIDE_CENTER)
         allAttackData(SIDE_RIGHT) = buildAtkDataLong(allTargetInfo, targetType, SIDE_RIGHT, fodderTimes, atkTimes, toolTimes, SIDE_CENTER)
     Else
-    
+    	
     	//>119,169,219,269,
     	If allTargetInfo(SIDE_LEFT, DF_LONG) = allTargetInfo(SIDE_RIGHT, DF_LONG) Then 
         	If allTargetInfo(SIDE_LEFT, DF_SHORT) * allTargetInfo(SIDE_LEFT, DF_NUM_SHORT) <= allTargetInfo(SIDE_RIGHT, DF_SHORT) * allTargetInfo(SIDE_RIGHT, DF_NUM_SHORT) Then 
@@ -3048,17 +3052,19 @@ Function atkNomads(targetData, allAttackData)
         	baseIndex = SIDE_LEFT
     	End If
     	
-
+    	allTargetInfo(firstSide, DF_PW_LONG) = 0
+    	allTargetInfo(sideIndex, DF_PW_LONG) = 0
     	If 2*allTargetInfo(baseIndex, DF_NUM_LONG) > allTargetInfo(baseIndex, DF_NUM_SHORT) Then 
     		allTargetInfo(baseIndex, DF_PW_SHORT) = 0
     	Else 
     		allTargetInfo(baseIndex, DF_PW_LONG) = 0
     	End If
     	
-        
-        allAttackData(SIDE_CENTER) = buildAtkDataLong(allTargetInfo, targetType, SIDE_CENTER, fodderTimes, atkTimes, toolTimes, baseIndex)
+        //ymCenterToolTimes = 1,ymAtkTimes=4
+        allAttackData(SIDE_CENTER) = buildAtkDataLong(allTargetInfo, targetType, SIDE_CENTER, fodderTimes, atkTimes, ymCenterToolTimes, baseIndex)
         allAttackData(sideIndex) = buildAtkDataLong(allTargetInfo, targetType, sideIndex, fodderTimes, atkTimes, toolTimes, baseIndex)
     End If
+    atkNomads=0
 End Function
 
 Function buildAtkDataComm(allTargetInfo, atkType, sideIndex, fodderTimes, atkTimes, toolTimes, baseIndex, toolData)
@@ -3091,9 +3097,6 @@ Function selectNomadsTools(sideDefData, batchTimes)
     TracePrint "selectNomadsTools: " & Join(sideDefData, ",")
     
     Dim allToolsInfo = Array(batchTimes)
-    
-
-	
     Dim toolsInfo = Array(3), ladderCnt, hammerCnt,shieldCnt
     toolsInfo(0) = Array(0, "")
     toolsInfo(1) = Array(0, "")
@@ -3156,7 +3159,7 @@ Function selectNomadsTools(sideDefData, batchTimes)
             Else 
             	//mix 34+iron hammer+ladder
             	toolsInfo(0) = Array(34, toolShieldArray(shieldType))
-            	toolsInfo(1) = Array((sideDefData(DF_DOOR) + 19) \ 20, "Attachment:slt_tool_hammer.png", 6)
+            	toolsInfo(1) = Array((sideDefData(DF_DOOR) + 19) \ 20, "Attachment:slt_tool_iron_hammer.png", 6)
             	toolsInfo(2) = Array((sideDefData(DF_WALL) + 9) \ 10, "Attachment:slt_tool_ladder.png", 6)
             End If
         ElseIf sideDefData(DF_LONG) <= 119 Then
@@ -3209,14 +3212,17 @@ Function selectNomadsTools(sideDefData, batchTimes)
 	
 	allToolsInfo(0) = toolsInfo
 	
-	//第二波工具特殊处理
-	Dim tmpToolsInfo = Array(1)
+		//第二波工具特殊处理
+	
     If batchTimes > 1 Then 
-    	tmpToolsInfo(0) = Array("Attachment:slt_tool_box.png", 5, 6)
+    	Dim tmpToolsInfo = Array(1)
+    	tmpToolsInfo(0) = Array(3,"Attachment:slt_tool_box.png", 6)
+    	
     	allToolsInfo(1) = tmpToolsInfo
     End If
-
-	TracePrint "Tool info: " & CommUtil.Join2DimArray(allToolsInfo(0))
+	
+	
+	TracePrint "Tool info: " & CommUtil.Join3DimArray(allToolsInfo)
 	selectNomadsTools = allToolsInfo
 End Function
 
@@ -3854,6 +3860,7 @@ Function selectSoldierNum(px, py, soldierImages, mode, total, isLong)
     //TracePrint "[selectSoldierNum] px,py=> " & px & "," & py & ", " & soldierImages & "," & total 
 	If total = 0 Then 
     	TracePrint "select zero."
+    	selectSoldierNum=0
     	Exit Function
     End If
       
@@ -4801,6 +4808,15 @@ Function init
 	loadTowerParam()
 End Function
 
+Dim cdToolsEnable,cdToolsTime,cdExeTimes,ymCenterToolTimes=1,ymAtkTimes
+Function loadCdToolCfg
+	//24h, 5h, 1h, 30m, 10m, 5m, 1m
+	cdToolsEnable = Array(false, true, true, true, true, true) 
+	cdToolsTime = Array(18000,14000,7200,3000,1200)
+	cdExeTimes=40
+	ymCenterToolTimes = 2,ymAtkTimes=4
+End Function
+
 Function loadArmyCfgData
 	Dim armyStrArray = Array(8)
     armyStrArray(0) = "1,长枪兵,spearman,26,0,26,8#2,木弓箭手,woodbow,0,24,8,24#3,链锤兵,maceman,38,0,38,6#4,弩箭手,crossbow,0,36,6,36#5,长斧兵,halberdier,17,0,135,45#6,长弓射手,longbowman,0,20,51,125#7,重剑手,swordsman_heavy,109,0,19,5#8,重弩箭手,crossbow_heavy,0,92,15,24#9,剑客,swordsman,61,0,5,3#10,铁弓箭手,ironbow,0,10,53,55#11,民兵,militias,3,0,9,9#12,高级民兵,militias_ad,10,0,10,10"
@@ -4814,11 +4830,12 @@ Function loadArmyCfgData
 	loadArmyCfgData = armyStrArray
 End Function
 
+
 //============================================================================================
 // Gloable Configuration Area
 //============================================================================================
 Function loadGlobalConfig
-	//DELAY_OPERATE_RANK = Array(300,500,1000) //delay time level
+	//DELAY_OPERATE_RANK = Array(400,800,1200) //delay time level
 	
 	townFlags = Array(true, true, true, true, true, true, true, true)
 	
@@ -4829,11 +4846,11 @@ Function loadGlobalConfig
 	//build tool
 	gBuildTool=4, gCityBuildTool  = Array(-1,-1,-1,-1,3,3,3,4)
 	
-	gTimer = 30, gTimerPriority = 10, gCityRecruitTimer = 20
+	gTimer = 30, gTimerPriority = 20, gCityRecruitTimer = 20
 	gFirstStartCity = 0, gLastExePriorityNo = 0
 
 	//1:youmu，2：wushi  | gFastCampaingFlag 0:normal, 1:fast+wood 2:fast+iron
-	gCampaignType = 0, gCampaignMinTimer = 10, gFastCampaingFlag = 1
+	gCampaignType = 1, gCampaignMinTimer = 20, gFastCampaingFlag = 1
 	
 	//berimond campaign , buildType:1,zhangpeng,other:dec
 	gBrmdEnable = false, gBrmdBuildType=0
@@ -4846,29 +4863,29 @@ Function loadGlobalConfig
 	//============================================================================================
 	cmdArgs = "69,0,57#85,40,45#70,0,60#35,0,30#90,35,50#80,40,60#53,25,40#53,25,40#85,40,45"
 	
-	armyAtkArray(0) = Array(23,25,41,51,53,55,61,75,101,103,105)
-	armyAtkArray(1) = Array(24,26,42,52,54,56,62,76,102,104,106)
+	armyAtkArray(0) = Array(23,25,41,51,53,55,61,101,103,105)
+	armyAtkArray(1) = Array(24,26,42,52,54,56,62,102,104,106,114)
 	
 	armyHsptRtn = Array(41, 42, 101, 102, 103, 104)
 	
 	//cannon fodder
 	armyCannonFodder = Array(2, 4, 102, 106)
 	
-	twMapArray(0) = "-1,552,568,0#-1,555,569,0#-1,553,572,0#-1,549,571,0#-1,549,566,0#0,556,573,0#0,552,576,0#0,549,575,0#0,546,572,0#0,546,576,0"
-	twMapArray(1) = "10,543,566,0#10,546,567,0#10,542,569,0#10,539,570,0#10,537,567,0#10,538,562,0#10,542,563,0#10,545,562,0"
-	twMapArray(2) = "20,549,566,0#20,549,562,0#20,548,559,0#20,555,556,0#20,553,559,0#20,552,563,0#20,555,556,0#20,556,552,0"
-	twMapArray(3) = "30,565,568,0#30,568,565,0#30,565,564,0#30,562,566,0#30,559,563,0#30,558,566,0#30,560,569,0#30,559,572,0"
-	twMapArray(4) = "1,637,737,1#1,634,733,1#1,641,738,1#1,629,739,1#1,637,729,1#1,641,730,1#1,646,734,1#1,635,744,1#1,627,733,1#1,629,727,1#1,624,741,1#1,638,746,1#1,644,743,1#1,635,749,1#1,648,739,1#1,644,726,1"
+	//twMapArray(0) = "-1,552,568,0#-1,555,569,0#-1,553,572,0#-1,549,571,0#-1,549,566,0#0,556,573,0#0,552,576,0#0,549,575,0#0,546,572,0#0,546,576,0"
+	//twMapArray(6) = "10,543,566,0#10,546,567,0#10,542,569,0#10,539,570,0#10,537,567,0#10,538,562,0#10,542,563,0#10,545,562,0"
+	//twMapArray(2) = "20,549,566,0#20,549,562,0#20,548,559,0#20,555,556,0#20,553,559,0#20,552,563,0#20,555,556,0#20,556,552,0"
+	twMapArray(4) = "30,565,568,0#30,568,565,0#30,565,564,0#30,562,566,0#30,559,563,0#30,558,566,0#30,560,569,0#30,559,572,0"
+	twMapArray(3) = "1,637,737,1#1,634,733,1#1,641,738,1#1,629,739,1#1,637,729,1#1,641,730,1#1,646,734,1#1,635,744,1#1,627,733,1#1,629,727,1#1,624,741,1#1,638,746,1#1,644,743,1#1,635,749,1#1,648,739,1#1,644,726,1"
 	twMapArray(5) = "2,633,664,2#2,637,662,2#2,639,667,2#2,634,668,2#2,633,659,2#2,637,657,2#2,644,666,2#2,637,671,2#2,629,658,2#2,627,667,2#2,628,662,2#2,644,659,2#2,632,655,2#2,623,665,2#2,636,652,2#2,634,675,2"
-	twMapArray(6) = "3,626,704,3#3,622,702,3#3,632,704,3#3,624,708,3#3,630,709,3#3,636,700,3#3,629,695,3#3,625,697,3#3,620,698,3#3,617,703,3#3,620,706,3#3,617,709,3#3,636,695,3#3,627,690,3#3,626,716,3#3,632,715,3"
+	twMapArray(1) = "3,626,704,3#3,622,702,3#3,632,704,3#3,624,708,3#3,630,709,3#3,636,700,3#3,629,695,3#3,625,697,3#3,620,698,3#3,617,703,3#3,620,706,3#3,617,709,3#3,636,695,3#3,627,690,3#3,626,716,3#3,632,715,3"
 	//grigand map
 	gSkipBrigandMap = Array(0,0,0,0,0,0,0,0)
 
-	twNomads = "10,551,568,11,90#0,551,566,11,90#20,550,565,11,90#30,547,564,11,90"
+	twNomads = "0,551,568,11,91#0,551,566,11,90#20,550,565,11,90#10,547,564,11,90"
 	
 	//twSamurai 
 	//twForeign
-	
+	loadCdToolCfg()
 End Function
 
 Call main()
