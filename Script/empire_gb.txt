@@ -3075,7 +3075,7 @@ Function atkNomads(targetData, allAttackData)
     ElseIf targetData(TAGT_LVL) >= 61 Then
     	//Level: 61-70
     	allTargetInfo = readAllEnimyCity(targetData(TAGT_TYPE))
-        allTargetInfo (SIDE_CENTER, DF_lONG) = 120
+        allTargetInfo (SIDE_CENTER, DF_lONG) = 119
         allTargetInfo(SIDE_LEFT, DF_lONG) = 100
         allTargetInfo(SIDE_LEFT, DF_SHORT) = 119
         allTargetInfo(SIDE_RIGHT, DF_lONG) = 100
@@ -3277,7 +3277,7 @@ Function selectNomadsTools(sideDefData, batchTimes)
             	toolsInfo(1) = Array((sideDefData(DF_DOOR) + 19) \ 20, "Attachment:slt_tool_iron_hammer.png", 6)
             	toolsInfo(2) = Array((sideDefData(DF_WALL) + 9) \ 10, "Attachment:slt_tool_ladder.png", 6)
             End If
-        ElseIf sideDefData(DF_LONG) <= 119 Then
+        ElseIf sideDefData(DF_LONG) <= 120 Then
             //24 + x
             //toolsInfo(0) = Array(24, "Attachment:slt_tool_shield.png")
             
