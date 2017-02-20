@@ -4,7 +4,7 @@ Import "PictureUtil.mql"
 
 Dim DELAY_OPERATE_RANK = Array(300,500,1000)
 Dim screenX = GetScreenX(), screenY = GetScreenY()
-Dim MINUTE_ONE = 60, MINUTE_HALF = 30
+Dim MINUTE_ONE = 60, MINUTE_HALF = 30, FONT_SIZE_8=8, FONT_SIZE_9=9,FONT_SIZE_10=10, FONT_SIZE_11=11
 Dim SPY_SUC_RATE = 12
 
 //全局找图变量
@@ -56,15 +56,18 @@ Function main
 	//TracePrint intX & "," & intY
 	//TracePrint gotoWorldMap(0)
 	//TracePrint Ocr(230,512,245,530, "2A3748-303030|495A6B-202020|667B8C-201510", 0.9)
-	
+	//TracePrint(EmpireOcr.ocrSysNumber(100,548, 120,557, FONT_SIZE_8))
+   
     //atk 测试
-    Dim data = Array(0,551,566,11,91,0,0,0,0) 
+    Dim data = Array(0,546,572,0,0,0,0,0,0) 
     //atkSamurai(data)
-    //dealOneTarget(data, true, true)
+    dealOneTarget(data, true, true)
     //Delay 15*60000
     //outerCommand
     //buildRoom(1)
 	
+	//campaignBerimond()
+	//berimondRecruit
 	//atkBerimondPlan()
 	
 	//buildRoom(2)
@@ -827,7 +830,7 @@ Function cityRecruitOld(soldierIndex, singleMode)
                     //首次有概率点击无效
                     //If j = 1 Then 
                     	//Dim tmp = EmpireOcr.ocrNumber(px+155, py+65, px+175, py+75)
-                    	Dim tmp = Ocr(px+195,py+20, px+210, py+40, "2A3748-303030|495A6B-202020|667B8C-201510", 0.9)
+                    	Dim tmp =  EmpireOcr.ocrSysNumber(px+195,py+20, px+210, py+40, FONT_SIZE_10)
                     	//TracePrint "recruite soldier amount: " & tmp
                     	If tmp <> "" And CInt(tmp) <> 1 Then
                         	//op_plus.png
@@ -1439,6 +1442,7 @@ End Function
 //
 //
 Dim curMap=0, maxAtk = 6, maxSpy = 2, curAtk=0,curSpy=0, lastSpyTime=0, lastAtkIdx=0, inMapAtk=0, tmpSkipFront = Array(false, false, false, false)
+Dim gMapContinueAtk = 4
 Dim gLastExeTowerNo=0, gLastExeTowerTime=0
 Function autoAtk(spyMode)
     TracePrint "Start auto ack with " & gLastExeTowerNo
@@ -1540,7 +1544,7 @@ Function autoAtk(spyMode)
             ElseIf result = 1 Then
                 lastAtkIdx = index
                 inMapAtk = inMapAtk + 1
-                If inMapAtk >= 4 Then 
+                If inMapAtk >= gMapContinueAtk Then 
                     changeMap = true
                 End If
             End If
@@ -2250,7 +2254,7 @@ Function attackTarget(baseX, baseY, targetData)
     If targetData(TAGT_TYPE) = 11 Then 
         result = atkNomads(targetData, allAttackData) 
     ElseIf targetData(TAGT_TYPE) = 12 Then
-        result = atkSamurai(targetData)
+        //result = atkSamurai(targetData)
     Else 
         result = atkBrigands(targetData, allAttackData)
     End If
@@ -2384,6 +2388,11 @@ Function attackAllocateAll(attackData)
         atkArgs(ATK_TOOL_TURNS) = 0
         TracePrint "fix fodder and tools to zero."
     End If
+    
+    Dim specCannon = ""
+    If atkArgs(ATK_TYPE) = 15 Then 
+    	specCannon = armyArray(106, ARMY_PIC_ATK)
+    End If
 	
     Delay DELAY_OPERATE_RANK(0) 
     For i = 1 To 4
@@ -2403,7 +2412,7 @@ Function attackAllocateAll(attackData)
             End If
 			
             If atkArgs(ATK_FODDER_TURNS) >= i Then 
-                sltResult = selectCannonSoldier(tmpX, tmpY)
+                sltResult = selectCannonSoldier(tmpX, tmpY, specCannon)
                 //TracePrint "Select soldier (cannon) " & sltResult
                 If sltResult = 0 Then 
                     TracePrint "not cannon soldier: " & sltResult
@@ -2723,26 +2732,38 @@ Function berimondRecruit()
         Exit Function
     End If
 	
-	Dim ocrStr = EmpireOcr.ocrNumber(96,635, 117,642)
-	If ocrStr = "" Then 
-		ocrStr = EmpireOcr.ocrNumber(96,635, 117,642)
+	Delay DELAY_OPERATE_RANK(1)
+	Dim total = EmpireOcr.readPosiInteger(205,215, 275,227, FONT_SIZE_9)
+	If total <> -1 Then 
+		total = total\10000
 	End If
-	Dim longCount = Cint(ocrStr)
-	Dim shortCount = Cint(EmpireOcr.ocrNumber(96,513, 117,520))
-    TracePrint "berimond army: " & shortCount & "," & longCount
+	
+	Dim shortCount = EmpireOcr.readPosiInteger(100,548, 120,557, FONT_SIZE_8)
+	
+	dragMove 130, 530, 0, -100
+	Delay DELAY_OPERATE_RANK(1)
+	Dim longCount =EmpireOcr.readPosiInteger(99, 629, 120, 638, FONT_SIZE_8)
     
+    TracePrint "berimond army: " & total & "," & shortCount & "," & longCount
+    If longCount = -1 and total > shortCount and shortCount > 0 Then 
+    	longCount = total - shortCount
+    ElseIf shortCount = -1 and total > longCount and longCount > 0 Then
+     	shortCount = total - longCount
+    End If
+    
+    dragMove 130, 530, 0, 120
+	Delay DELAY_OPERATE_RANK(1)
     If longCount < 400 And shortCount > 400 Then 
-        tapPositionTimes(384, 583, 5)
+        tapPositionTimes 384, 620, 2
     ElseIf shortCount < 400 And longCount > 400 Then
-        tapPositionTimes(384, 463, 5)
+        tapPositionTimes 384, 500, 2
     Else 
-    	tapPositionTimes(384, 583, 1)
-    	tapPositionTimes(384, 463, 1)
-    	tapPositionTimes(384, 583, 1)
-    	tapPositionTimes(384, 463, 1)
-    	tapPositionTimes(384, 583, 1)
+    	tapPositionTimes(384, 620, 1)
+    	tapPositionTimes(384, 500, 1)
     End If
 End Function
+
+
 
 Function buildRoom(type)
     //build
@@ -2841,6 +2862,7 @@ Function atkBerimondPlan
 End Function
 
 // 100030:无适合指挥官
+Dim gBrmdSideLong = 60, gBrmdCenterLong = 80
 Function atkBerimond() 
     TracePrint "attacking berimond:"
     atkBerimond = -1
@@ -2863,7 +2885,7 @@ Function atkBerimond()
 	
     Dim basicWall = 60 - commanderArray(cmdId-1, 0)
     Dim basicDoor = 60 - commanderArray(cmdId-1, 1)
-    Dim basicLong = 0, centerLong = 60
+    Dim basicLong = gBrmdSideLong, centerLong = gBrmdCenterLong
 	
 	
     Dim cntCenter = 156, cntSide =  52
@@ -2911,143 +2933,6 @@ Function selectBerimondTools(sideDefData, batchTimes)
     End If
 	
 	selectBerimondTools = allToolsInfo
-End Function
-
-
-//
-Function atkSamurai(targetData)
-    Dim cmdId = selectCommanders(Array(1,2,3,4))
-    If cmdId < 1 or cmdId > 4 Then 
-        atkSamurai =  -100030
-        Exit Function
-    End If
-	
-    Dim allTargetInfo = readAllEnimyCity2(targetData(TAGT_TYPE))
-    If allTargetInfo(0, 0) <= 0 or allTargetInfo(1, 0) <= 0 or allTargetInfo(2, 0) <= 0 Then 
-        TracePrint "数据异常，退出"
-        atkSamurai = -1
-        Exit Function
-    End If
-	
-    //
-    Dim totalShort=0, totalLong=0
-    Dim atkIdx = Array(2), curCount, counter = 0
-    For i=0 to 2 
-        totalShort = totalShort+allTargetInfo(i, DF_NUM_SHORT)
-        totalLong = totalLong+allTargetInfo(i, DF_NUM_LONG)
-        curCount = allTargetInfo(i, DF_NUM_SHORT) + allTargetInfo(i, DF_NUM_LONG)
-		
-        if curCount < 5 then
-            atkIdx(counter) = i
-            counter = counter+1
-			
-            allTargetInfo(i, DF_WALL)=0
-            allTargetInfo(i, DF_DOOR)=0
-            allTargetInfo(i, DF_LONG) = 0
-            allTargetInfo(i, DF_PW_SHORT)=0
-            allTargetInfo(i, DF_PW_LONG)=0
-            //allTargetInfo(i, DF_NUM_SHORT)=0
-            //allTargetInfo(i, DF_NUM_LONG)=0
-        end if
-    next
-    totalShort = totalShort+allTargetInfo(3, DF_NUM_SHORT)
-    totalLong = totalLong+allTargetInfo(3, DF_NUM_LONG)
-	
-	
-    //中+1边，中，三路
-    Dim total = totalShort+totalLong
-    if total > 800 then
-        atkSamurai = -100201
-        exit function
-    end if
-	
-    if counter = 2 and atkIdx(0) = SIDE_LEFT and atkIdx(1) = SIDE_RIGHT then
-        //left + right
-        atkSamurai = -100202
-        exit function
-    end if
-	
-
-    //L+R
-    Dim atkSide = -1
-    if (allTargetInfo(1, DF_NUM_SHORT) + allTargetInfo(1, DF_NUM_LONG) < 5) or (allTargetInfo(2, DF_NUM_SHORT) + allTargetInfo(2, DF_NUM_LONG) < 5 ) or total > 300 then
-        if allTargetInfo(1, DF_NUM_SHORT) < allTargetInfo(2, DF_NUM_SHORT) then
-            atkSide = SIDE_LEFT
-        else
-            atkSide = SIDE_RIGHT
-        end if
-    else
-		
-        //only center
-    end if
-	
-    //center
-    Dim result = -1,atkTimes = 4, toolTimes=4
-    Dim mainBatch = Clone(allTargetInfo(SIDE_CENTER)), secondBatch = Clone(allTargetInfo(SIDE_CENTER))
-    If mainBatch(DF_PW_SHORT) > 0 Then
-        mainBatch(DF_PW_LONG) = 0
-        secondBatch(DF_PW_SHORT) = 0
-    ElseIf mainBatch(DF_NUM_SHORT) + mainBatch(DF_NUM_LONG) = 0 Then
-        mainBatch(DF_PW_SHORT) = 1000
-        secondBatch(DF_PW_LONG) = 1000
-    End If
-    If mainBatch(DF_NUM_SHORT) > 192 Then 
-        toolTimes = 4
-    ElseIf mainBatch(DF_NUM_SHORT) > 128 Then
-        toolTimes = 3
-    ElseIf mainBatch(DF_NUM_SHORT) > 64 Then
-        toolTimes = 2
-    ElseIf mainBatch(DF_NUM_SHORT) > 3 Then
-        toolTimes = 1
-    Else 
-        toolTimes = 0
-    End If
-	
-	
-    result = attackAllocArmy(SIDE_CENTER, mainBatch, secondBatch, 196, 0, atkTimes, toolTimes, 12)
-    If result < 0 Then 
-        atkSamurai = result
-        Exit Function
-    Elseif atkSide = -1 Then
-        atkSamurai = 1
-        Exit Function
-    End If
-	
-    //L/R	
-    If atkSide = SIDE_LEFT Then
-        tapPosition 55, 326
-    ElseIf atkSide = SIDE_RIGHT
-        tapPosition 420, 326
-    End If
-	
-    mainBatch = Clone(allTargetInfo(atkSide))
-    secondBatch = Clone(allTargetInfo(atkSide))
-    If mainBatch(DF_PW_SHORT) > 0 Then 
-        mainBatch(DF_PW_LONG) = 0
-        secondBatch(DF_PW_LONG) = 0
-    ElseIf mainBatch(DF_NUM_SHORT) + mainBatch(DF_NUM_LONG) = 0 Then
-        mainBatch(DF_PW_SHORT) = 1000
-        secondBatch(DF_PW_LONG) = 1000
-    End If
-    If mainBatch(DF_NUM_SHORT) > 192 Then 
-        toolTimes = 4
-    ElseIf mainBatch(DF_NUM_SHORT) > 128 Then
-        toolTimes = 3
-    ElseIf mainBatch(DF_NUM_SHORT) > 64 Then
-        toolTimes = 2
-    ElseIf mainBatch(DF_NUM_SHORT) > 3 Then
-        toolTimes = 1
-    Else 
-        toolTimes = 0
-    End If
-	
-    result = attackAllocArmy(atkSide, mainBatch, secondBatch, 64, 0, atkTimes, toolTimes, 12)
-    If result <= 0 Then 
-        atkSamurai = result
-    Else 
-        atkSamurai = 1
-    End If
-	
 End Function
 
 // 100030:无适合指挥官
@@ -3277,7 +3162,7 @@ Function selectNomadsTools(sideDefData, batchTimes)
             	toolsInfo(1) = Array((sideDefData(DF_DOOR) + 19) \ 20, "Attachment:slt_tool_iron_hammer.png", 6)
             	toolsInfo(2) = Array((sideDefData(DF_WALL) + 9) \ 10, "Attachment:slt_tool_ladder.png", 6)
             End If
-        ElseIf sideDefData(DF_LONG) <= 120 Then
+        ElseIf sideDefData(DF_LONG) <= 119 Then
             //24 + x
             //toolsInfo(0) = Array(24, "Attachment:slt_tool_shield.png")
             
@@ -3611,7 +3496,7 @@ Function selectCommander(cmdId)
             tapPosition 330,140
         Next
 		
-        Dim str = OCR(180, 210, 205, 226, "2A3748-303030|495A6B-202020|667B8C-201510", 0.9)
+        Dim str = EmpireOcr.ocrSysNumber(180, 210, 205, 226, FONT_SIZE_11)
         TracePrint str
         curId =  CInt(str)
         If curId=0 or curId = cmdId Then 
@@ -3649,134 +3534,6 @@ Function readAtkNumber(px, py, sideIndex)
     End If
     CommUtil.capRealseMem 
     readAtkNumber = result
-End Function
-
-//基础近远防，基础近远攻
-//batchImgArray:出兵的波次
-Function attackAllocArmy(sideIndex, sideDefData, otherSideDefData, total, cannonSoldier, times, toolTimes, targetType)	
-    Dim tmpToolTimes = 0, sltResult=-1, defData=sideDefData
-    attackAllocArmy = 0
-	
-	TracePrint "AttackAllocArmy[ side=" & sideIndex & ",total=" & total & ", cannonSoldier=" & cannonSoldier & " ,times= " & times & ", toolTimes=" & toolTimes & ", targetType=" & targetType & "]"
-	TracePrint "main side defence: " & Join(sideDefData, ",")
-	TracePrint "backup side defence: " & Join(otherSideDefData, ",")
-	
-	
-    If sideDefData(DF_PW_SHORT) + sideDefData(DF_PW_LONG) = 0 Then 
-        cannonSoldier = 0
-        toolTimes = 0
-        TracePrint "fix cannon foder and tools to zero."
-    End If
-	
-	//bug fix
-	//dragMove 180, 610, 400, 0
-	//Delay DELAY_OPERATE_RANK(1)
-	
-	
-    Dim amountArray
-	
-    Delay DELAY_OPERATE_RANK(0) 
-    For i = 1 To 4
-        FindPicFull atkWavesMark(i-1)
-        //FindPic( 0, 0, 0, 0,  batchImgArray(i), "080808", 0, 0.8, intX, intY)
-        If intX > -1 And intY > -1 Then 
-            Dim tmpX=intX, tmpY=intY
-            If i = 1 Then 
-                amountArray = readAtkNumber(tmpX, tmpY, sideIndex)
-                //TracePrint "attack pre count:" & Join(amountArray, ",")
-            End If
-			
-            //转换初始点
-            If sideIndex = SIDE_CENTER Then 
-                tmpX = tmpX - 50
-            Else 
-                tmpX = tmpX - 15
-            End If
-			
-            If cannonSoldier >= i Then 
-                sltResult = selectCannonSoldier(tmpX, tmpY)
-                //TracePrint "Select soldier (cannon) " & sltResult
-                If sltResult = 0 Then 
-                    TracePrint "not cannon soldier: " & sltResult
-                    sltResult = -100021
-                    Exit For
-                End If
-            ElseIf times+cannonSoldier >= i Then
-                //tapPosition intX, intY + 80
-				
-                //base (targetType < 10 and i - cannonSoldier > 1) or (targetType >= 10 and (i - cannonSoldier) Mod 2 = 0)
-                Dim realAtkNo = i - cannonSoldier
-                If (sideDefData(DF_PW_SHORT) + sideDefData(DF_PW_LONG) = 0) or (targetType < 10 and realAtkNo > 1) or (targetType>=10 and realAtkNo Mod 2 = 0)Then 
-                    defData = otherSideDefData
-                Else 
-                    defData=sideDefData
-                End If
-				
-                //TracePrint Now() & " Enemy info " & Join(defData, ",")
-                total = amountArray(0)
-                sltResult = selectAtkSoldier(tmpX, tmpY, defData, total)
-                TracePrint "Select soldier (attack) " & sltResult
-                
-                If sltResult < (total - total \ 10) Then 
-                    TracePrint "not enough soldier: " & sltResult
-                    sltResult = -100022
-                    Exit For
-                End If
-				
-				
-				
-                //wuqi
-                If tmpToolTimes < toolTimes  Then 
-                    //wall
-                    Dim sltToolResult = 0
-                    If targetType = 11 Then 
-                        //sltToolResult = selectNomadsTools(tmpX, tmpY, defData, tmpToolTimes)
-                    ElseIf targetType = 12 Then
-                        sltToolResult = sltToolsSamurai(tmpX, tmpY, defData, amountArray(0))
-                    ElseIf targetType = 15 Then
-                        //sltToolResult = selectBerimondTools(tmpX, tmpY, defData)
-                    Else
-                        sltToolResult = selectTools(tmpX, tmpY, defData)
-                    End If
-					
-					//TracePrint "Select soldier (tools) " & sltResult
-                    If sltToolResult < 0 Then 
-                        sltResult = sltToolResult
-                        Exit For                
-                    End If
-					
-                    tmpToolTimes = tmpToolTimes+1
-                End If
-            End If
-			
-			
-            If times + cannonSoldier <= i Then 
-                Exit For
-            End If
-			
-			
-            //side:150, cener:220
-            Delay DELAY_OPERATE_RANK(0)
-            If sideIndex = SIDE_CENTER Then
-				
-                dragMove 370, 515, -220, 0
-                If i= 3 Then
-                    Delay DELAY_OPERATE_RANK(1)
-                End If
-            Else 
-                If i < 3 Then
-                    dragMove 370, 515, -150, 0
-                End If
-            End If
-            Delay DELAY_OPERATE_RANK(1)
-        Else 
-            TracePrint "找不到波次:" & i & "," & atkWavesMark(i-1)
-            sltResult = -20
-            Exit For
-        End If
-    Next
-	
-    attackAllocArmy = sltResult
 End Function
 
 Function selectTools(px, py, sideDefData)
@@ -3947,14 +3704,22 @@ Function selectShortSoldier(px, py, mode, total)
     selectShortSoldier = selectSoldierNum(px, py, armyAtkShortImages, mode, total, false)
 End Function
 
-Function selectCannonSoldier(basePx, basePy)
+Function selectCannonSoldier(basePx, basePy, specImages)
     //Dim m = EmpireOcr.ocrNumber(270, 324, 320, 332)
-    //TracePrint "selectCannonSoldier"
     Dim px=basePx,py=basePy+80
 	
-    //retry 3
-    //For i = 0 To 2    
-    Dim result = selectSoldierNum(px, py, armyCannonImages, 1, 1, true)
+	TracePrint "1"
+	
+	Dim result = 0
+	If IsNull(specImages) = False And specImages <> "" Then 
+		TracePrint "2"
+		result = selectSoldierNum(px, py, specImages, 1, 1, true)
+	End If
+	
+    TracePrint "3" & result
+    If result <= 0 Then
+    	result = selectSoldierNum(px, py, armyCannonImages, 1, 1, true)
+    End If
 		
     If result = 0 Then 
         Dim img = armyArray(42, ARMY_PIC_ATK) & "|" & armyArray(102, ARMY_PIC_ATK)
@@ -3965,10 +3730,6 @@ Function selectCannonSoldier(basePx, basePy)
     //verify
     Dim actualArmy = readActualArmy(basePx, basePy, 1)
     selectCannonSoldier = actualArmy(0)
-    //If actualArmy(0) > 0 Then 
-    //	Exit For
-    //End If
-    //Next
 End Function
 
 Function selectSoldierNum(px, py, soldierImages, mode, total, isLong)
@@ -4675,6 +4436,7 @@ Function readEnimyInfo(btlType)
     readEnimyInfo = cityDefValue
 End Function
 
+
 //============================================================================================
 // army infomation
 //============================================================================================
@@ -4927,10 +4689,14 @@ Dim cdToolsEnable,cdToolsTime,cdExeTimes,ymCenterToolTimes=1,ymAtkTimes=2,ymComm
 Function loadCdToolCfg
 	//24h, 5h, 1h, 30m, 10m, 5m, 1m
 	cdToolsEnable = Array(false, false, true, true, true, true) 
-	cdToolsTime = Array(18000,14000,7200,3000,1200)
+	//cdToolsTime = Array(18000, 14000, 7200, 3000, 1200)
+	cdToolsTime = Array(18000,14000,7200,2400,600)
 	cdExeTimes=40
-	ymCenterToolTimes = 1,ymAtkTimes=2
-	//ymCommander = Array(7,8)
+	ymCenterToolTimes = 2,ymAtkTimes=3
+	ymCommander = Array(7, 8)
+	
+	//berimond arg
+	gBrmdSideLong = 60, gBrmdCenterLong = 80
 End Function
 
 Function loadArmyCfgData
@@ -4952,23 +4718,23 @@ End Function
 Function loadGlobalConfig
 	DELAY_OPERATE_RANK = Array(300,600,1200) //delay time level
 	
-	townFlags = Array(true, true, true, true, true, true, false, false)
+	townFlags = Array(true, true, true, true, true, true, true, false)
 	
 	//build army
 	gBuildArmy = 101, gBuildArmyNum=2, gBuildArmyMix = ""
-	gCityBuildArmy = Array(-1, -1, -1, -1, -1, -1, -1, -1)
+	gCityBuildArmy = Array(-1, -1, -1, -1, -1, -1, -2, -2)
 	
 	//build tool
-	gBuildTool=3, gCityBuildTool  = Array(-1,-1,-1,-1,3,3,3,4)
+	gBuildTool=3, gCityBuildTool  = Array(-1,-1,-1,-1,3,3,4,4)
 	
-	gTimer = 30, gTimerPriority = 10, gCityRecruitTimer = 20
+	gTimer = 30, gTimerPriority = 30, gCityRecruitTimer = 20
 	gFirstStartCity = 0, gLastExePriorityNo = 0
 
 	//1:youmu，2：wushi  | gFastCampaingFlag 0:normal, 1:fast+wood 2:fast+iron
-	gCampaignType = 1, gCampaignMinTimer = 10, gFastCampaingFlag = 1
+	gCampaignType = 0, gCampaignMinTimer = 30, gFastCampaingFlag = 1
 	
 	//berimond campaign , buildType:1,zhangpeng,other:dec
-	gBrmdEnable = false, gBrmdBuildType=0
+	gBrmdEnable = true, gBrmdBuildType=0
 	gTaskEnable = false, gTranEnable=false, gOutCmdEnable = false, gHelpRecruitEnable=false
 	
 	//SPY_SUC_RATE = 12
@@ -4989,7 +4755,7 @@ Function loadGlobalConfig
 	//twMapArray(0) = "00,546,537,0#20,552,537,0#30,549,532,0#10,552,542,0#00,549,536,0#20,553,533,0#30,546,533,0#10,555,539,0#00,549,540,0#20,556,534,0#30,552,529,0#10,558,540,0#00,547,543,0#20,555,530,0#30,549,527,0#10,555,543,0#00,545,540,0#20,559,533,0#30,546,528,0#10,547,543,0#00,543,536,0#20,560,537,0#30,543,527,0#10,548,546,0#00,520,535,0#20,562,534,0#30,542,530,0#10,545,547,0#00,539,538,0#20,560,530,0#30,555,526,0#10,553,547,0#00,542,539,0#00,542,543,0#00,539,542,0"
 	twMapArray(0) = "00,546,537,0#00,549,536,0#00,549,540,0#00,547,543,0#00,545,540,0#00,543,536,0#00,520,535,0#00,539,538,0#00,542,539,0#00,542,543,0#00,539,542,0"
 	twMapArray(1) = "10,552,542,0#10,555,539,0#10,558,540,0#10,555,543,0#10,547,543,0#10,548,546,0#10,545,547,0#10,553,547,0"
-	//twMapArray(2) = "20,552,537,0#20,553,533,0#20,556,534,0#20,555,530,0#20,559,533,0#20,560,537,0#20,562,534,0#20,560,530,0"
+	twMapArray(2) = "20,552,537,0#20,553,533,0#20,556,534,0#20,555,530,0#20,559,533,0#20,560,537,0#20,562,534,0#20,560,530,0"
 	twMapArray(3) = "30,549,532,0#30,546,533,0#30,552,529,0#30,549,527,0#30,546,528,0#30,543,527,0#30,542,530,0#30,555,526,0"
 
 	twMapArray(4) = "1,726,739,1#1,730,738,1#1,729,734,1#1,724,734,1#1,733,743,1#1,735,736,1#1,722,743,1#1,719,738,1"
@@ -4998,7 +4764,7 @@ Function loadGlobalConfig
 	//grigand map
 	gSkipBrigandMap = Array(0,0,0,0,0,0,0,0)
 
-	twNomads = "20,554,537,11,68#20,549,538,11,68#20,539,541,11,68#20,541,539,11,68"
+	twNomads = "0,539,541,11,69#20,554,537,11,68#20,549,538,11,69#0,541,539,11,68"
 	
 	//twSamurai 
 	//twForeign

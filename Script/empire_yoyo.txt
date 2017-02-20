@@ -4,7 +4,7 @@ Import "PictureUtil.mql"
 
 Dim DELAY_OPERATE_RANK = Array(300,500,1000)
 Dim screenX = GetScreenX(), screenY = GetScreenY()
-Dim MINUTE_ONE = 60, MINUTE_HALF = 30
+Dim MINUTE_ONE = 60, MINUTE_HALF = 30, FONT_SIZE_8=8, FONT_SIZE_9=9,FONT_SIZE_10=10, FONT_SIZE_11=11
 Dim SPY_SUC_RATE = 12
 
 //全局找图变量
@@ -43,7 +43,8 @@ EmpireOcr.loadFontLib()
 Function main
     //初始化基础数据
     init()
-
+	
+	//autoCreate()
 	//selectCommander(7)
 	//readEnimyInfo(1)
 	//cityRecruit(40, 1)
@@ -55,15 +56,18 @@ Function main
 	//TracePrint intX & "," & intY
 	//TracePrint gotoWorldMap(0)
 	//TracePrint Ocr(230,512,245,530, "2A3748-303030|495A6B-202020|667B8C-201510", 0.9)
-	
+	//TracePrint(EmpireOcr.ocrSysNumber(100,548, 120,557, FONT_SIZE_8))
+   
     //atk 测试
-    Dim data = Array(3,626,704,3,0,0,0,0,0) 
+    Dim data = Array(10,542,563,0,0,0,0,0,0) 
     //atkSamurai(data)
     //dealOneTarget(data, true, true)
     //Delay 15*60000
     //outerCommand
     //buildRoom(1)
 	
+	//campaignBerimond()
+	//berimondRecruit
 	//atkBerimondPlan()
 	
 	//buildRoom(2)
@@ -78,15 +82,20 @@ Function main
 	
 
     //gotoCity (8)
-    //gotoWorldMap(5)
+    //gotoWorldMap(2)
     //gotoMainMap()
     //campaignBlade
 	
     //clearPopWindow 
     //clearPopWindowReconn
 	
+	//dragMoveListItem("Attachment:select_royal_b_crossbow.png" ,5)
+	
     //cityRecruitPre (0)
+    //cityRecruit(102,0)
     //cityBuildToolPre(0)
+    
+    //createShield(3)
 	
     //campaignTask(nomadsTowerArray)
     //campaignBerimond()
@@ -206,12 +215,14 @@ Function mainLoop
         
         doTask()
         
-        //autoCreate()
+        If gRunCounter mod 5 = 1 Then
+        	autoCreate 
+        End If
         
         helpOther()
         
         TracePrint Now() & " Do auto attacking..."
-        For i = 0 To 15
+        For i = 0 To 30
 
         	
             //dis connect检测
@@ -314,6 +325,12 @@ Function simpleLoop
         TracePrint "Delay 5 minutes."
         Delay 5*60*1000
     Loop
+End Function
+
+Function TapX(n, x, y)
+	For i = 1 To n
+		Tap x, y
+	Next
 End Function
 
 Function buyTool(amount, type)
@@ -749,8 +766,7 @@ Function cityRecruitFast
     TracePrint Now() & " 招募结束："
 End Function
 
-//造兵()
-Function cityRecruit(soldierIndex, singleMode)
+Function cityRecruitOld(soldierIndex, singleMode)
     Delay DELAY_OPERATE_RANK(2)
     If soldierIndex < 0 Then 
         Exit Function
@@ -814,7 +830,7 @@ Function cityRecruit(soldierIndex, singleMode)
                     //首次有概率点击无效
                     //If j = 1 Then 
                     	//Dim tmp = EmpireOcr.ocrNumber(px+155, py+65, px+175, py+75)
-                    	Dim tmp = Ocr(px+195,py+20, px+210, py+40, "2A3748-303030|495A6B-202020|667B8C-201510", 0.9)
+                    	Dim tmp =  EmpireOcr.ocrSysNumber(px+195,py+20, px+210, py+40, FONT_SIZE_10)
                     	//TracePrint "recruite soldier amount: " & tmp
                     	If tmp <> "" And CInt(tmp) <> 1 Then
                         	//op_plus.png
@@ -863,12 +879,109 @@ Function cityRecruit(soldierIndex, singleMode)
     Next
 End Function
 
+//造兵()
+Function cityRecruit(soldierIndex, singleMode)
+    Delay DELAY_OPERATE_RANK(2)
+    If soldierIndex < 0 Then 
+        Exit Function
+    End If
+
+    //是否远程，切换远程面板后需要暂停一定时间
+    If armyArray(soldierIndex, ARMY_ATK_L) > 0 Then 
+        FindPicFull "Attachment:p_recruit_tab_long.png"
+        If intX > 0 And intY > 0 Then
+            tapPosition2 intX, intY, DELAY_OPERATE_RANK(0)
+        End If
+    End If
+    
+    Dim count = checkAvaiableCount()   
+    If count = 0 Then 
+        TracePrint "[cityRecruit] Not avaiable slot."
+        Exit Function
+    End If
+    
+    //Find
+
+    Delay DELAY_OPERATE_RANK(1)
+    Dim pxy = dragMoveListItem(armyArray(soldierIndex, ARMY_PIC_ATK), 8)
+    Dim px = pxy(0),py = pxy(1)
+    
+    If px = -1 or py =-1 Then 
+        TracePrint "Can not build soldire: " & armyArray(soldierIndex, ARMY_NAME)
+        Exit Function
+    End If
+    
+    PictureUtil.findPicRegion(0, py, screenX, py + 100, "Attachment:op_recruit_do.png", intXY)
+    If intXY(X) = -1 or intXY(Y) = -1 Then 
+        TracePrint "不能建造，级别不够"
+        Exit Function
+    End If
+    
+    TracePrint "Recruite soldier base position: " & px & "," & py
+    
+    Delay DELAY_OPERATE_RANK(1)
+    Do While count > 0 
+        PictureUtil.tapPositionDelay(px+345, py+30, DELAY_OPERATE_RANK(0))
+        count = count - 1
+    Loop
+    
+    //skip help other
+    If gHelpRecruitEnable = False Then 
+    	Exit Function
+    End If
+    
+    FindPicFull "Attachment:op_army_help.png"
+    If intX > 0 And intY > 0 Then 
+        tapPosition intX, intY
+    End If
+    
+End Function
+
+Function dragMoveListItem(itemPic, n)
+	dragMoveListItem = Array(-1,-1)
+	Dim startY = 300, endY = 700, px,py
+	
+	PictureUtil.findPicRegion 30, startY, 130, endY, "Attachment:build_select_item_mask.png", intXY
+	If intXY(X) = -1 or intXY(Y) = -1 Then 
+		TracePrint "[dragMoveListItem]not find any item"
+		Exit Function
+	End If
+	
+	//record baseY
+	Dim baseY = intXY(Y) - 120
+	//TracePrint "baseY:" & baseY
+	
+	For i = 1 To n
+		PictureUtil.findPicRegion 30, startY, 130, endY, "Attachment:build_select_item_mask.png", intXY
+		If intXY(X) >= 0 and intXY(Y) >=0 Then 
+			px = intXY(X)
+			py = intXY(Y)
+			//startY = py + 120
+			
+			PictureUtil.findPicRegion(px, py, px+100, py+100, itemPic, intXY)
+			If intXY(X) >= 0 Then 
+				dragMoveListItem = intXY
+				TracePrint "[dragMoveListItem]find item " & itemPic
+				Exit Function	
+			End If
+			
+			//TracePrint baseY-py
+			dragMove 80, 555, 0, baseY-py
+		Else 
+			Exit For
+		End If
+	Next
+	
+	TracePrint "[dragMoveListItem]not find item " & itemPic
+	dragMoveListItem = Array(-1,-1)
+End Function
+
 Function checkAvaiableCount
     //count amount Y:230,350
     Dim count = 0, startX=0
     CommUtil.capKeepMem(0)
     Do While True
-        FindPicArea2 startX, 230, screenX, 350, "Attachment:build_available_loc1.png|Attachment:build_available_loc2.png"
+        FindPicArea2 startX, 230, screenX, 350, "Attachment:build_available_loc3.png|Attachment:build_available_loc4.png|Attachment:build_available_loc1.png|Attachment:build_available_loc2.png"
         If count=5 or intX = -1 or intY = -1 Then 
             Exit Do
         End If
@@ -925,6 +1038,12 @@ Function createShield(toolType)
             toolIconPath = "Attachment:slt_tool_shield.png"
         End If
         //MessageBox toolType&":"&toolIconPath
+        
+        Dim pxy = dragMoveListItem(toolIconPath, 8)
+        targetX = pxy(0)
+        targetY = pxy(1)
+        
+        /*
         //循环检查
         Do While n < 10
             FindPic 30,410,130,700,toolIconPath,"101010", 0, 0.9, intX, intY
@@ -938,6 +1057,8 @@ Function createShield(toolType)
             //TracePrint Now & "==10:" & listX & "," & listY
             Call dragMove(listX, listY, 0, -150)
         Loop
+        */
+        
         Delay DELAY_OPERATE_RANK(1)
         
 		//TracePrint "[createShield] targetX,Y => " & targetX & "," & targetX
@@ -975,7 +1096,8 @@ Function cityHospital(cityIndex)
     clearPopWindow 
 	
     //hospital
-    If gHospital > 0 and gRunCounter Mod gHospital = 0 Then 
+    //If gHospital > 0 and gRunCounter Mod gHospital = 0 Then 
+    If gHospital > 0 Then
         If tapPic2(Array("Attachment:banner_military.png", "Attachment:banner_m_mil_hospital.png"), DELAY_OPERATE_RANK(1)) = false Then 
             TracePrint "无法打开医疗面板"
             Exit Function
@@ -1072,7 +1194,7 @@ Function hospital(cityIndex)
     //for help
     Dim helpClickPx = 70
     For i=0 to count-1
-        //璇锋眰甯姪
+        //
         helpClickPx = 70 + i * 83
         If finishX <> -1 And helpClickPx > finishX Then 
             //TracePrint "px: " & px & ", i" & i 
@@ -1167,26 +1289,6 @@ Function dfSearchBoat()
     Loop
 End Function
 
-/*
-Function battle
-		FindPicFull "Attachment:xxx.png"
-		If intX > 0 And intY > 0 Then 
-			Tap intX, intY
-			Delay DELAY_OPERATE_RANK(0)
-		Else 
-			Exit Function
-		End If
-
-		//冷却中
-		FindPicFull "Attachment:battle_wait.png"
-		If intX > 0 And intY > 0 Then 
-			Call close()
-			Exit Function
-		End If
-		
-		
-End Function
-*/
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
@@ -1262,15 +1364,16 @@ End Function
 Function gotoWorldMap(mapNo)
     TracePrint "goto map : " & mapNo
 	
-    gotoWorldMap = True
+    Dim result = True
 	
     clearPopWindow()
     If mapNo = 0 Then 
-        gotoWorldMap = gotoMainMap()
+        result = gotoMainMap()
     Else 
         //城堡循环逻辑
         If tapPic2(Array("Attachment:banner_navigate.png", "Attachment:banner_m_nav_pos.png"), DELAY_OPERATE_RANK(0)) = False Then 
             TracePrint "无法导航图标"
+            gotoWorldMap = False
             Exit Function
         End If
         Delay DELAY_OPERATE_RANK(2)
@@ -1285,7 +1388,7 @@ Function gotoWorldMap(mapNo)
                 tapPosition(intX-40,intY+15)
                 waitLoadingPage 
             Else 
-                gotoWorldMap = False
+                result = False
             End If
         Else 
             //478-415=63
@@ -1294,27 +1397,52 @@ Function gotoWorldMap(mapNo)
                 tapPosition(intX-40,intY+20+(mapNo-1)*63)
                 waitLoadingPage 
             Else 
-                gotoWorldMap = False
+                result = False
             End If
         End If
     End If
     
     //verify
-    Dim result = FindPic( 0, 0, 0, 0, "Attachment:map_grass_flag.png", "000000", 0, 1, intX, intY)
-    FindPicFull "Attachment:map_grass_flag.png"
-    //TracePrint result & "=>" & intX & "," & intY
-    If mapNo = 0 and intX = -1 Then 
-    	gotoWorldMap = False
-    ElseIf mapNo > 0 and intX > -1 Then
-    	gotoWorldMap = False
+    If result Then
+		result = verifyMap(mapNo)
+	End If
+    
+    TracePrint "[gotoWorldMap] result:" & CSTR(result)
+    gotoWorldMap = result
+End Function
+
+Function verifyMap(mapNo)
+    Dim result = true
+    //verify map
+    If mapNo = 0 Then 
+    	FindPic( 0, 0, 0, 0, "Attachment:map_grass_flag.png|Attachment:map_flag_grass_snow.png", "000000", 0, 1, intX, intY)
+    	If intX = -1 Then 
+    		TracePrint "ERROR: fail to verify map. not find grass flag."
+    		result = False
+    	End If
+    ElseIf mapNo = 1 Then
+    	FindPic( 0, 0, 0, 0, "Attachment:map_flag_ice.png|Attachment:map_flag_ice2.png|Attachment:map_flag_ice3.png", "000000", 0, 0.9, intX, intY)
+    	If intX = -1 Then 
+    		TracePrint "ERROR: fail to verify map. not find ice flag."
+    		result = False
+    	End If
+    Else
+    	FindPic( 0, 0, 0, 0, "Attachment:map_grass_flag.png|Attachment:map_flag_grass_snow.png", "000000", 0, 1, intX, intY)
+    	If intX > -1 Then 
+    		TracePrint "ERROR: fail to verify map. find grass flag." & mapNo
+    		result = False
+    	End If
     End If
     
+    verifyMap = result
 End Function
+
 
 //===========================================================================
 //
 //
 Dim curMap=0, maxAtk = 6, maxSpy = 2, curAtk=0,curSpy=0, lastSpyTime=0, lastAtkIdx=0, inMapAtk=0, tmpSkipFront = Array(false, false, false, false)
+Dim gMapContinueAtk = 4
 Dim gLastExeTowerNo=0, gLastExeTowerTime=0
 Function autoAtk(spyMode)
     TracePrint "Start auto ack with " & gLastExeTowerNo
@@ -1416,7 +1544,7 @@ Function autoAtk(spyMode)
             ElseIf result = 1 Then
                 lastAtkIdx = index
                 inMapAtk = inMapAtk + 1
-                If inMapAtk >= 4 Then 
+                If inMapAtk >= gMapContinueAtk Then 
                     changeMap = true
                 End If
             End If
@@ -1458,76 +1586,82 @@ Function atkLoopLogic(targetData, spyMode)
 		
 	// map 0-n(n < 10), tower id 1x,2x...9x 
     Dim mapNo = targetData(TAGT_MAP)
-    If mapNo >= 0 Then 
-        if mapNo >= 10 then
-			mapNo = mapNo Mod 10
-		end if
+    If mapNo < 0 Then 
+    	atkLoopLogic = 0
+    	TracePrint "[atkLoopLogic]" & "skip current tower"
+    	Exit Function
+    End If
+    
+    if mapNo >= 10 then
+		mapNo = mapNo Mod 10
+	end if
+	
+	If mapNo <> curMap Then 
+        if gotoWorldMap (mapNo) Then
+            curMap = mapNo
+            inMapAtk = 0
+        Else 
+            atkLoopLogic = 0
+            TracePrint "[atkLoopLogic]" & "fail to change map."
+            Exit Function
+        End If
+    End If
 		
-		If mapNo <> curMap Then 
-            if gotoWorldMap (mapNo) Then
-                curMap = mapNo
-                inMapAtk = 0
-            Else 
-                atkLoopLogic = -1
-            End If
-        End If
-			
-        Dim isAtk = true, isSpy=true
-        If (targetData(TAGT_TYPE)<10 and curAtk >= maxAtk) or spyMode Then 
-            isAtk = false
-        End If
-			
-        //根据时间重置spy
-        If Time() - lastSpyTime > 45 Then 
-            curSpy = curSpy - 2
-            lastSpyTime = Time()
-        End If
-			
-        If curSpy >= maxSpy Then 
-            isSpy = False
-        End If
-			
-			
-        If isAtk or isSpy Then 
-            resultCode = dealOneTarget(targetData, isAtk, isSpy)
-            //TracePrint "result : " & result
-            //Dim result = 0
-            If resultCode < 0 Then 
-                If resultCode = -101 Then 
-                    If isDisConnect() Then 
-                        TracePrint "断开连接"
-                    Else 
-                        TracePrint "其他原因导致定位出错"
-                        resultCode = 12
-                    End If
-                ElseIf resultCode = -100022 Then
-                    //
-                Else
-                    TracePrint "退出循环,result:" & resultCode
-                End If
-            ElseIf resultCode = 12 Then
-                lastSpyTime = Time()
-                curSpy = curSpy + 1
-            ElseIf resultCode = 1 Then
-                curAtk = curAtk + 1
-                If curSpy > 0 Then
-                    lastSpyTime = Time()
-                    curSpy = curSpy - 2
-                End If
-            ElseIf resultCode = 0 Then
-                //重连退出
-                //TracePrint "跳过"
+    Dim isAtk = true, isSpy=true
+    If (targetData(TAGT_TYPE)<10 and curAtk >= maxAtk) or spyMode Then 
+        isAtk = false
+    End If
+		
+    //根据时间重置spy
+    If Time() - lastSpyTime > 45 Then 
+        curSpy = curSpy - 2
+        lastSpyTime = Time()
+    End If
+		
+    If curSpy >= maxSpy Then 
+        isSpy = False
+    End If
+		
+		
+    If isAtk or isSpy Then 
+        resultCode = dealOneTarget(targetData, isAtk, isSpy)
+        //TracePrint "result : " & result
+        //Dim result = 0
+        If resultCode < 0 Then 
+            If resultCode = -101 Then 
                 If isDisConnect() Then 
                     TracePrint "断开连接"
-                    resultCode = -1
+                Else 
+                    TracePrint "其他原因导致定位出错"
+                    resultCode = 12
                 End If
+            ElseIf resultCode = -100022 Then
+                //
+            Else
+                TracePrint "退出循环,result:" & resultCode
             End If
-        Else 
-            TracePrint "退出循环:" & curAtk & "," & curSpy
-            resultCode = -1
-        End If	
+        ElseIf resultCode = 12 Then
+            lastSpyTime = Time()
+            curSpy = curSpy + 1
+        ElseIf resultCode = 1 Then
+            curAtk = curAtk + 1
+            If curSpy > 0 Then
+                lastSpyTime = Time()
+                curSpy = curSpy - 2
+            End If
+        ElseIf resultCode = 0 Then
+            //重连退出
+            //TracePrint "跳过"
+            If isDisConnect() Then 
+                TracePrint "断开连接"
+                resultCode = -1
+            End If
+        End If
+    Else 
+        TracePrint "退出循环:" & curAtk & "," & curSpy
+        resultCode = -1
+    End If	
 				
-    End If
 		
     //判断时间
     If Time() - gMainLoopStartTime > gTimer * MINUTE_ONE Then 
@@ -1588,25 +1722,9 @@ Function dealOneTarget(targetData, canAtk, canSpy)
 	
     clearPopWindow 
     
-    //verify map
-    If targetData(TAGT_MAP) Mod 10 = 0 Then 
-    	FindPic( 0, 0, 0, 0, "Attachment:map_grass_flag.png|Attachment:map_flag_grass_snow.png", "000000", 0, 1, intX, intY)
-    	If intX = -1 Then 
-    		TracePrint "ERROR: fail to verify map. not find grass flag."
-    		Exit Function
-    	End If
-    ElseIf targetData(TAGT_MAP) = 1 Then
-    	FindPic( 0, 0, 0, 0, "Attachment:map_flag_ice.png|Attachment:map_flag_ice2.png|Attachment:map_flag_ice3.png", "000000", 0, 0.9, intX, intY)
-    	If intX = -1 Then 
-    		TracePrint "ERROR: fail to verify map. not find ice flag."
-    		Exit Function
-    	End If
-    ElseIf targetData(TAGT_MAP) Mod 10 Then
-    	FindPic( 0, 0, 0, 0, "Attachment:map_grass_flag.png|Attachment:map_flag_grass_snow.png", "000000", 0, 1, intX, intY)
-    	If intX > -1 Then 
-    		TracePrint "ERROR: fail to verify map. find grass flag." & targetData(TAGT_MAP)
-    		Exit Function
-    	End If
+    //verify map(重复验证，保证正确)
+    If verifyMap(targetData(TAGT_MAP) Mod 10) = false Then 
+    	Exit Function
     End If
 
     result = selectTarget(targetData(TAGT_X), targetData(TAGT_Y))
@@ -2006,7 +2124,7 @@ Function attackTarget(baseX, baseY, targetData)
         	
         //冷却修复
         Dim flag = false
-        If targetData(TAGT_TYPE) = 11 And targetData(TAGT_LVL) = 91 Then 
+        If targetData(TAGT_TYPE) = 11 And ((targetData(TAGT_LVL) Mod 10) = 9 or targetData(TAGT_LVL)=91 )Then 
         	TracePrint "==" & coolTime
         	if tapPicArea(0, 300, screenY, 500,"Attachment:bat_cd_refresh.png", DELAY_OPERATE_RANK(1)) Then
         		Dim moveFlag30m=false,moveFlag10m=false, moveFlag5m=false
@@ -2136,7 +2254,7 @@ Function attackTarget(baseX, baseY, targetData)
     If targetData(TAGT_TYPE) = 11 Then 
         result = atkNomads(targetData, allAttackData) 
     ElseIf targetData(TAGT_TYPE) = 12 Then
-        result = atkSamurai(targetData)
+        //result = atkSamurai(targetData)
     Else 
         result = atkBrigands(targetData, allAttackData)
     End If
@@ -2252,6 +2370,7 @@ End Function
 // ATK_TOOL_DATA: attack tools data 2 Dimention
 // Dim ATK_DATA_FLAG=0, ATK_DATA_ARGS=1, ATK_DATA_TOOL=2, ATK_DATA_DEF=3, ATK_DATA_BASE=4
 //============================================================================================
+Dim gAtkType = 0
 Dim ATK_TYPE=0, ATK_SIDE_IDX=1, ATK_FODDER_TURNS=2, ATK_TURNS=3, ATK_TOOL_TURNS=4, ATK_TOOL_EXTRA=5
 Function attackAllocateAll(attackData)
     
@@ -2269,6 +2388,12 @@ Function attackAllocateAll(attackData)
         atkArgs(ATK_FODDER_TURNS) = 0
         atkArgs(ATK_TOOL_TURNS) = 0
         TracePrint "fix fodder and tools to zero."
+    End If
+    
+    Dim specCannon = ""
+    gAtkType = atkArgs(ATK_TYPE)
+    If atkArgs(ATK_TYPE) = 15 Then 
+    	specCannon = armyArray(106, ARMY_PIC_ATK)
     End If
 	
     Delay DELAY_OPERATE_RANK(0) 
@@ -2289,7 +2414,7 @@ Function attackAllocateAll(attackData)
             End If
 			
             If atkArgs(ATK_FODDER_TURNS) >= i Then 
-                sltResult = selectCannonSoldier(tmpX, tmpY)
+                sltResult = selectCannonSoldier(tmpX, tmpY, specCannon)
                 //TracePrint "Select soldier (cannon) " & sltResult
                 If sltResult = 0 Then 
                     TracePrint "not cannon soldier: " & sltResult
@@ -2609,26 +2734,38 @@ Function berimondRecruit()
         Exit Function
     End If
 	
-	Dim ocrStr = EmpireOcr.ocrNumber(96,635, 117,642)
-	If ocrStr = "" Then 
-		ocrStr = EmpireOcr.ocrNumber(96,635, 117,642)
+	Delay DELAY_OPERATE_RANK(1)
+	Dim total = EmpireOcr.readPosiInteger(205,215, 275,227, FONT_SIZE_9)
+	If total <> -1 Then 
+		total = total\10000
 	End If
-	Dim longCount = Cint(ocrStr)
-	Dim shortCount = Cint(EmpireOcr.ocrNumber(96,513, 117,520))
-    TracePrint "berimond army: " & shortCount & "," & longCount
+	
+	Dim shortCount = EmpireOcr.readPosiInteger(100,548, 120,557, FONT_SIZE_8)
+	
+	dragMove 130, 530, 0, -100
+	Delay DELAY_OPERATE_RANK(1)
+	Dim longCount =EmpireOcr.readPosiInteger(99, 629, 120, 638, FONT_SIZE_8)
     
+    TracePrint "berimond army: " & total & "," & shortCount & "," & longCount
+    If longCount = -1 and total > shortCount and shortCount > 0 Then 
+    	longCount = total - shortCount
+    ElseIf shortCount = -1 and total > longCount and longCount > 0 Then
+     	shortCount = total - longCount
+    End If
+    
+    dragMove 130, 530, 0, 120
+	Delay DELAY_OPERATE_RANK(1)
     If longCount < 400 And shortCount > 400 Then 
-        tapPositionTimes(384, 583, 5)
+        tapPositionTimes 384, 620, 2
     ElseIf shortCount < 400 And longCount > 400 Then
-        tapPositionTimes(384, 463, 5)
+        tapPositionTimes 384, 500, 2
     Else 
-    	tapPositionTimes(384, 583, 1)
-    	tapPositionTimes(384, 463, 1)
-    	tapPositionTimes(384, 583, 1)
-    	tapPositionTimes(384, 463, 1)
-    	tapPositionTimes(384, 583, 1)
+    	tapPositionTimes(384, 620, 1)
+    	tapPositionTimes(384, 500, 1)
     End If
 End Function
+
+
 
 Function buildRoom(type)
     //build
@@ -2727,6 +2864,7 @@ Function atkBerimondPlan
 End Function
 
 // 100030:无适合指挥官
+Dim gBrmdSideLong = 60, gBrmdCenterLong = 80
 Function atkBerimond() 
     TracePrint "attacking berimond:"
     atkBerimond = -1
@@ -2749,7 +2887,7 @@ Function atkBerimond()
 	
     Dim basicWall = 60 - commanderArray(cmdId-1, 0)
     Dim basicDoor = 60 - commanderArray(cmdId-1, 1)
-    Dim basicLong = 0, centerLong = 60
+    Dim basicLong = gBrmdSideLong, centerLong = gBrmdCenterLong
 	
 	
     Dim cntCenter = 156, cntSide =  52
@@ -2799,193 +2937,57 @@ Function selectBerimondTools(sideDefData, batchTimes)
 	selectBerimondTools = allToolsInfo
 End Function
 
-
-//
-Function atkSamurai(targetData)
-    Dim cmdId = selectCommanders(Array(1,2,3,4))
-    If cmdId < 1 or cmdId > 4 Then 
-        atkSamurai =  -100030
-        Exit Function
-    End If
-	
-    Dim allTargetInfo = readAllEnimyCity2(targetData(TAGT_TYPE))
-    If allTargetInfo(0, 0) <= 0 or allTargetInfo(1, 0) <= 0 or allTargetInfo(2, 0) <= 0 Then 
-        TracePrint "数据异常，退出"
-        atkSamurai = -1
-        Exit Function
-    End If
-	
-    //
-    Dim totalShort=0, totalLong=0
-    Dim atkIdx = Array(2), curCount, counter = 0
-    For i=0 to 2 
-        totalShort = totalShort+allTargetInfo(i, DF_NUM_SHORT)
-        totalLong = totalLong+allTargetInfo(i, DF_NUM_LONG)
-        curCount = allTargetInfo(i, DF_NUM_SHORT) + allTargetInfo(i, DF_NUM_LONG)
-		
-        if curCount < 5 then
-            atkIdx(counter) = i
-            counter = counter+1
-			
-            allTargetInfo(i, DF_WALL)=0
-            allTargetInfo(i, DF_DOOR)=0
-            allTargetInfo(i, DF_LONG) = 0
-            allTargetInfo(i, DF_PW_SHORT)=0
-            allTargetInfo(i, DF_PW_LONG)=0
-            //allTargetInfo(i, DF_NUM_SHORT)=0
-            //allTargetInfo(i, DF_NUM_LONG)=0
-        end if
-    next
-    totalShort = totalShort+allTargetInfo(3, DF_NUM_SHORT)
-    totalLong = totalLong+allTargetInfo(3, DF_NUM_LONG)
-	
-	
-    //中+1边，中，三路
-    Dim total = totalShort+totalLong
-    if total > 800 then
-        atkSamurai = -100201
-        exit function
-    end if
-	
-    if counter = 2 and atkIdx(0) = SIDE_LEFT and atkIdx(1) = SIDE_RIGHT then
-        //left + right
-        atkSamurai = -100202
-        exit function
-    end if
-	
-
-    //L+R
-    Dim atkSide = -1
-    if (allTargetInfo(1, DF_NUM_SHORT) + allTargetInfo(1, DF_NUM_LONG) < 5) or (allTargetInfo(2, DF_NUM_SHORT) + allTargetInfo(2, DF_NUM_LONG) < 5 ) or total > 300 then
-        if allTargetInfo(1, DF_NUM_SHORT) < allTargetInfo(2, DF_NUM_SHORT) then
-            atkSide = SIDE_LEFT
-        else
-            atkSide = SIDE_RIGHT
-        end if
-    else
-		
-        //only center
-    end if
-	
-    //center
-    Dim result = -1,atkTimes = 4, toolTimes=4
-    Dim mainBatch = Clone(allTargetInfo(SIDE_CENTER)), secondBatch = Clone(allTargetInfo(SIDE_CENTER))
-    If mainBatch(DF_PW_SHORT) > 0 Then
-        mainBatch(DF_PW_LONG) = 0
-        secondBatch(DF_PW_SHORT) = 0
-    ElseIf mainBatch(DF_NUM_SHORT) + mainBatch(DF_NUM_LONG) = 0 Then
-        mainBatch(DF_PW_SHORT) = 1000
-        secondBatch(DF_PW_LONG) = 1000
-    End If
-    If mainBatch(DF_NUM_SHORT) > 192 Then 
-        toolTimes = 4
-    ElseIf mainBatch(DF_NUM_SHORT) > 128 Then
-        toolTimes = 3
-    ElseIf mainBatch(DF_NUM_SHORT) > 64 Then
-        toolTimes = 2
-    ElseIf mainBatch(DF_NUM_SHORT) > 3 Then
-        toolTimes = 1
-    Else 
-        toolTimes = 0
-    End If
-	
-	
-    result = attackAllocArmy(SIDE_CENTER, mainBatch, secondBatch, 196, 0, atkTimes, toolTimes, 12)
-    If result < 0 Then 
-        atkSamurai = result
-        Exit Function
-    Elseif atkSide = -1 Then
-        atkSamurai = 1
-        Exit Function
-    End If
-	
-    //L/R	
-    If atkSide = SIDE_LEFT Then
-        tapPosition 55, 326
-    ElseIf atkSide = SIDE_RIGHT
-        tapPosition 420, 326
-    End If
-	
-    mainBatch = Clone(allTargetInfo(atkSide))
-    secondBatch = Clone(allTargetInfo(atkSide))
-    If mainBatch(DF_PW_SHORT) > 0 Then 
-        mainBatch(DF_PW_LONG) = 0
-        secondBatch(DF_PW_LONG) = 0
-    ElseIf mainBatch(DF_NUM_SHORT) + mainBatch(DF_NUM_LONG) = 0 Then
-        mainBatch(DF_PW_SHORT) = 1000
-        secondBatch(DF_PW_LONG) = 1000
-    End If
-    If mainBatch(DF_NUM_SHORT) > 192 Then 
-        toolTimes = 4
-    ElseIf mainBatch(DF_NUM_SHORT) > 128 Then
-        toolTimes = 3
-    ElseIf mainBatch(DF_NUM_SHORT) > 64 Then
-        toolTimes = 2
-    ElseIf mainBatch(DF_NUM_SHORT) > 3 Then
-        toolTimes = 1
-    Else 
-        toolTimes = 0
-    End If
-	
-    result = attackAllocArmy(atkSide, mainBatch, secondBatch, 64, 0, atkTimes, toolTimes, 12)
-    If result <= 0 Then 
-        atkSamurai = result
-    Else 
-        atkSamurai = 1
-    End If
-	
-End Function
-
 // 100030:无适合指挥官
 Function atkNomads(targetData, allAttackData) 
     TracePrint "atkNomads:"
 
     Dim fodderTimes = 0, atkTimes = ymAtkTimes, toolTimes = 1, targetType = targetData(TAGT_TYPE)
 	
+	If IsNull(ymCommander) = False Then 
+		If selectCommanders(ymCommander) and gFastCampaingFlag = 0 Then 
+            atkNomads = -100030
+            Exit Function	
+		End If
+		
+		Delay 400
+	End If
+	
     //Center+side
     //重新读取谍报
     Dim allTargetInfo
     If targetData(TAGT_LVL) = 0 or targetData(TAGT_LVL) >= 81 Then 
-    	//选择指挥官
-    	
-    	If selectCommander(7) <> 7 Then 
-        	If selectCommander(8) <> 8 and gFastCampaingFlag = 0 Then 
-            	atkNomads = -100030
-            	Exit Function
-        	End If
-    	End If
-    	
-		Delay 400
-    
         allTargetInfo = readAllEnimyCity(targetData(TAGT_TYPE))
+    ElseIf targetData(TAGT_LVL) >= 71 Then
+    	fodderTimes = 2
+    ElseIf targetData(TAGT_LVL) >= 61 Then
+    	//Level: 61-70
+    	allTargetInfo = readAllEnimyCity(targetData(TAGT_TYPE))
+        allTargetInfo (SIDE_CENTER, DF_lONG) = 119
+        allTargetInfo(SIDE_LEFT, DF_lONG) = 100
+        allTargetInfo(SIDE_LEFT, DF_SHORT) = 119
+        allTargetInfo(SIDE_RIGHT, DF_lONG) = 100
+        allTargetInfo(SIDE_RIGHT, DF_SHORT) = 119
+        
+        fodderTimes = 2
     ElseIf targetData(TAGT_LVL) >= 51 Then
     	allTargetInfo = readAllEnimyCity(targetData(TAGT_TYPE))
-        atkTimes = 1
-        toolTimes = 1
-        fodderTimes = 2
-        allTargetInfo (0, DF_lONG) = 80
-        allTargetInfo (1, DF_lONG) = 60
-        allTargetInfo (2, DF_lONG) = 60
+        allTargetInfo (SIDE_CENTER, DF_lONG) = 80
+        allTargetInfo (SIDE_LEFT, DF_lONG) = 60
+        allTargetInfo (SIDE_RIGHT, DF_lONG) = 60
     ElseIf targetData(TAGT_LVL) = 61 Then
     	allTargetInfo = readAllEnimyCity(targetData(TAGT_TYPE))
-        atkTimes = 1
-        toolTimes = 1
         fodderTimes = 2
     Else 
         allTargetInfo = Array(3)
-        allTargetInfo (0) = Array(10, -1, -1, 0, 0, 5000, 5000, 10, 10)
-        allTargetInfo (1) = Array(10, -1, -1, 0, 0, 5000, 5000, 10, 10)
-        allTargetInfo (2) = Array(10, -1, -1, 0, 0, 5000, 5000, 10, 10)
+        allTargetInfo (SIDE_CENTER) = Array(10, -1, -1, 0, 0, 5000, 5000, 10, 10)
+        allTargetInfo (SIDE_LEFT) = Array(10, -1, -1, 0, 0, 5000, 5000, 10, 10)
+        allTargetInfo (SIDE_RIGHT) = Array(10, -1, -1, 0, 0, 5000, 5000, 10, 10)
         atkTimes = 1
         toolTimes = 0
         
         If targetData(TAGT_LVL) > 30 Then
-        	atkTimes = 1
-        	toolTimes = 0
         	fodderTimes = 1
         ElseIf targetData(TAGT_LVL) <= 30
-        	atkTimes = 1
-        	toolTimes = 0
         	fodderTimes = 0
         End If
     End If
@@ -3496,7 +3498,7 @@ Function selectCommander(cmdId)
             tapPosition 330,140
         Next
 		
-        Dim str = OCR(180, 210, 205, 226, "2A3748-303030|495A6B-202020|667B8C-201510", 0.9)
+        Dim str = EmpireOcr.ocrSysNumber(180, 210, 205, 226, FONT_SIZE_11)
         TracePrint str
         curId =  CInt(str)
         If curId=0 or curId = cmdId Then 
@@ -3507,7 +3509,7 @@ Function selectCommander(cmdId)
 				
                 If curId = 0 Then 
                     Delay DELAY_OPERATE_RANK(1)
-                    selectCommander = EmpireOcr.ocrNumber2(29, 774, 52, 781, 1)
+                    selectCommander = CInt(EmpireOcr.ocrNumber2(29, 774, 52, 781, 1))
                     //TracePrint selectCommander
                 End If
             Else 
@@ -3534,134 +3536,6 @@ Function readAtkNumber(px, py, sideIndex)
     End If
     CommUtil.capRealseMem 
     readAtkNumber = result
-End Function
-
-//基础近远防，基础近远攻
-//batchImgArray:出兵的波次
-Function attackAllocArmy(sideIndex, sideDefData, otherSideDefData, total, cannonSoldier, times, toolTimes, targetType)	
-    Dim tmpToolTimes = 0, sltResult=-1, defData=sideDefData
-    attackAllocArmy = 0
-	
-	TracePrint "AttackAllocArmy[ side=" & sideIndex & ",total=" & total & ", cannonSoldier=" & cannonSoldier & " ,times= " & times & ", toolTimes=" & toolTimes & ", targetType=" & targetType & "]"
-	TracePrint "main side defence: " & Join(sideDefData, ",")
-	TracePrint "backup side defence: " & Join(otherSideDefData, ",")
-	
-	
-    If sideDefData(DF_PW_SHORT) + sideDefData(DF_PW_LONG) = 0 Then 
-        cannonSoldier = 0
-        toolTimes = 0
-        TracePrint "fix cannon foder and tools to zero."
-    End If
-	
-	//bug fix
-	//dragMove 180, 610, 400, 0
-	//Delay DELAY_OPERATE_RANK(1)
-	
-	
-    Dim amountArray
-	
-    Delay DELAY_OPERATE_RANK(0) 
-    For i = 1 To 4
-        FindPicFull atkWavesMark(i-1)
-        //FindPic( 0, 0, 0, 0,  batchImgArray(i), "080808", 0, 0.8, intX, intY)
-        If intX > -1 And intY > -1 Then 
-            Dim tmpX=intX, tmpY=intY
-            If i = 1 Then 
-                amountArray = readAtkNumber(tmpX, tmpY, sideIndex)
-                //TracePrint "attack pre count:" & Join(amountArray, ",")
-            End If
-			
-            //转换初始点
-            If sideIndex = SIDE_CENTER Then 
-                tmpX = tmpX - 50
-            Else 
-                tmpX = tmpX - 15
-            End If
-			
-            If cannonSoldier >= i Then 
-                sltResult = selectCannonSoldier(tmpX, tmpY)
-                //TracePrint "Select soldier (cannon) " & sltResult
-                If sltResult = 0 Then 
-                    TracePrint "not cannon soldier: " & sltResult
-                    sltResult = -100021
-                    Exit For
-                End If
-            ElseIf times+cannonSoldier >= i Then
-                //tapPosition intX, intY + 80
-				
-                //base (targetType < 10 and i - cannonSoldier > 1) or (targetType >= 10 and (i - cannonSoldier) Mod 2 = 0)
-                Dim realAtkNo = i - cannonSoldier
-                If (sideDefData(DF_PW_SHORT) + sideDefData(DF_PW_LONG) = 0) or (targetType < 10 and realAtkNo > 1) or (targetType>=10 and realAtkNo Mod 2 = 0)Then 
-                    defData = otherSideDefData
-                Else 
-                    defData=sideDefData
-                End If
-				
-                //TracePrint Now() & " Enemy info " & Join(defData, ",")
-                total = amountArray(0)
-                sltResult = selectAtkSoldier(tmpX, tmpY, defData, total)
-                TracePrint "Select soldier (attack) " & sltResult
-                
-                If sltResult < (total - total \ 10) Then 
-                    TracePrint "not enough soldier: " & sltResult
-                    sltResult = -100022
-                    Exit For
-                End If
-				
-				
-				
-                //wuqi
-                If tmpToolTimes < toolTimes  Then 
-                    //wall
-                    Dim sltToolResult = 0
-                    If targetType = 11 Then 
-                        //sltToolResult = selectNomadsTools(tmpX, tmpY, defData, tmpToolTimes)
-                    ElseIf targetType = 12 Then
-                        sltToolResult = sltToolsSamurai(tmpX, tmpY, defData, amountArray(0))
-                    ElseIf targetType = 15 Then
-                        //sltToolResult = selectBerimondTools(tmpX, tmpY, defData)
-                    Else
-                        sltToolResult = selectTools(tmpX, tmpY, defData)
-                    End If
-					
-					//TracePrint "Select soldier (tools) " & sltResult
-                    If sltToolResult < 0 Then 
-                        sltResult = sltToolResult
-                        Exit For                
-                    End If
-					
-                    tmpToolTimes = tmpToolTimes+1
-                End If
-            End If
-			
-			
-            If times + cannonSoldier <= i Then 
-                Exit For
-            End If
-			
-			
-            //side:150, cener:220
-            Delay DELAY_OPERATE_RANK(0)
-            If sideIndex = SIDE_CENTER Then
-				
-                dragMove 370, 515, -220, 0
-                If i= 3 Then
-                    Delay DELAY_OPERATE_RANK(1)
-                End If
-            Else 
-                If i < 3 Then
-                    dragMove 370, 515, -150, 0
-                End If
-            End If
-            Delay DELAY_OPERATE_RANK(1)
-        Else 
-            TracePrint "找不到波次:" & i & "," & atkWavesMark(i-1)
-            sltResult = -20
-            Exit For
-        End If
-    Next
-	
-    attackAllocArmy = sltResult
 End Function
 
 Function selectTools(px, py, sideDefData)
@@ -3822,24 +3696,37 @@ end Function
 
 Function selectLongSoldier(px, py, mode, total)
     //TracePrint "selectLongSoldier"
-
-    selectLongSoldier = selectSoldierNum(px, py, armyAtkLongImages, mode, total, true)
+	Dim images = armyAtkLongImages
+	If gAtkType = 15 Then 
+		images = armyAtkLongImages & "|" & armyArray(65, ARMY_PIC_ATK)
+	End If
+	
+    selectLongSoldier = selectSoldierNum(px, py, images, mode, total, true)
 
 End Function
 
 Function selectShortSoldier(px, py, mode, total)
-    //TracePrint "selectShortSoldier"	
-    selectShortSoldier = selectSoldierNum(px, py, armyAtkShortImages, mode, total, false)
+    //TracePrint "selectShortSoldier"
+	Dim images = armyAtkShortImages
+	If gAtkType = 15 Then 
+		images = armyAtkShortImages & "|" & armyArray(63, ARMY_PIC_ATK)
+	End If
+    	
+    selectShortSoldier = selectSoldierNum(px, py, images, mode, total, false)
 End Function
 
-Function selectCannonSoldier(basePx, basePy)
+Function selectCannonSoldier(basePx, basePy, specImages)
     //Dim m = EmpireOcr.ocrNumber(270, 324, 320, 332)
-    //TracePrint "selectCannonSoldier"
     Dim px=basePx,py=basePy+80
 	
-    //retry 3
-    //For i = 0 To 2    
-    Dim result = selectSoldierNum(px, py, armyCannonImages, 1, 1, true)
+	Dim result = 0
+	If IsNull(specImages) = False And specImages <> "" Then 
+		result = selectSoldierNum(px, py, specImages, 1, 1, true)
+	End If
+	
+    If result <= 0 Then
+    	result = selectSoldierNum(px, py, armyCannonImages, 1, 1, true)
+    End If
 		
     If result = 0 Then 
         Dim img = armyArray(42, ARMY_PIC_ATK) & "|" & armyArray(102, ARMY_PIC_ATK)
@@ -3850,10 +3737,6 @@ Function selectCannonSoldier(basePx, basePy)
     //verify
     Dim actualArmy = readActualArmy(basePx, basePy, 1)
     selectCannonSoldier = actualArmy(0)
-    //If actualArmy(0) > 0 Then 
-    //	Exit For
-    //End If
-    //Next
 End Function
 
 Function selectSoldierNum(px, py, soldierImages, mode, total, isLong)
@@ -4560,6 +4443,7 @@ Function readEnimyInfo(btlType)
     readEnimyInfo = cityDefValue
 End Function
 
+
 //============================================================================================
 // army infomation
 //============================================================================================
@@ -4808,13 +4692,18 @@ Function init
 	loadTowerParam()
 End Function
 
-Dim cdToolsEnable,cdToolsTime,cdExeTimes,ymCenterToolTimes=1,ymAtkTimes=2
+Dim cdToolsEnable,cdToolsTime,cdExeTimes,ymCenterToolTimes=1,ymAtkTimes=2,ymCommander
 Function loadCdToolCfg
 	//24h, 5h, 1h, 30m, 10m, 5m, 1m
-	cdToolsEnable = Array(false, true, true, true, true, true) 
-	cdToolsTime = Array(18000,14000,7200,3000,1200)
+	cdToolsEnable = Array(false, false, true, true, true, true) 
+	//cdToolsTime = Array(18000, 14000, 7200, 3000, 1200)
+	cdToolsTime = Array(18000,14000,7200,2400,600)
 	cdExeTimes=40
 	ymCenterToolTimes = 2,ymAtkTimes=3
+	//ymCommander = Array(7, 8)
+	
+	//berimond arg
+	gBrmdSideLong = 0, gBrmdCenterLong = 60
 End Function
 
 Function loadArmyCfgData
@@ -4839,8 +4728,8 @@ Function loadGlobalConfig
 	townFlags = Array(true, true, true, true, true, true, true, true)
 	
 	//build army
-	gBuildArmy = 102, gBuildArmyNum=2, gBuildArmyMix = ""
-	gCityBuildArmy = Array(-1, -1, -1, -1, -1, -1, -1, -1)
+	gBuildArmy = 102, gBuildArmyNum=0, gBuildArmyMix = ""
+	gCityBuildArmy = Array(-1, -1, -1, -1, 102, 102, 102, 102)
 	
 	//build tool
 	gBuildTool=4, gCityBuildTool  = Array(-1,-1,-1,-1,3,3,3,4)
@@ -4849,11 +4738,12 @@ Function loadGlobalConfig
 	gFirstStartCity = 0, gLastExePriorityNo = 0
 
 	//1:youmu，2：wushi  | gFastCampaingFlag 0:normal, 1:fast+wood 2:fast+iron
-	gCampaignType = 1, gCampaignMinTimer = 20, gFastCampaingFlag = 1
+	gCampaignType = 0, gCampaignMinTimer = 20, gFastCampaingFlag = 1
+	maxAtk = 6, maxSpy = 3, gMapContinueAtk=1
 	
 	//berimond campaign , buildType:1,zhangpeng,other:dec
-	gBrmdEnable = false, gBrmdBuildType=0
-	gTaskEnable = false, gTranEnable=false, gOutCmdEnable = false, gHelpRecruitEnable=false
+	gBrmdEnable = true, gBrmdBuildType=0
+	gTaskEnable = true, gTranEnable=false, gOutCmdEnable = False, gHelpRecruitEnable=True
 	
 	//SPY_SUC_RATE = 12
 	//gAttackArmyLong = 80
@@ -4870,14 +4760,14 @@ Function loadGlobalConfig
 	//cannon fodder
 	armyCannonFodder = Array(2, 4, 102, 106)
 	
-	twMapArray(0) = "0,728,736,0#10,728,758,0#20,742,738,0#30,721,731,0#0,731,735,0#10,730,755,0#20,743,741,0#30,718,729,0#0,730,739,0#10,733,757,0#20,740,742,0#30,716,732,0#0,734,737,0#10,737,758,0#20,744,744,0#30,717,736,0#0,725,739,0#10,736,755,0#20,748,742,0#30,720,735,0#0,724,736,0#10,735,750,0#20,747,737,0#30,724,736,0#0,725,732,0#10,731,750,0#20,744,735,0#30,725,732,0#0,728,730,0#10,728,751,0#20,740,735,0#30,725,728,0#0,731,731,0#0,734,733,0"
-	//twMapArray(0) = "0,728,736,0#0,731,735,0#0,730,739,0#0,734,737,0#0,725,739,0#0,724,736,0#0,725,732,0#0,728,730,0#0,731,731,0#0,734,733,0"
-	//twMapArray(1) = "10,728,758,0#10,730,755,0#10,733,757,0#10,737,758,0#10,736,755,0#10,735,750,0#10,731,750,0#10,728,751,0"
-	//twMapArray(2) = "20,742,738,0#20,743,741,0#20,740,742,0#20,744,744,0#20,748,742,0#20,747,737,0#20,744,735,0#20,740,735,0"
-	//twMapArray(3) = "30,721,731,0#30,718,729,0#30,716,732,0#30,717,736,0#30,720,735,0#30,724,736,0#30,725,732,0#30,725,728,0"
-	twMapArray(4) = "1,719,543,1#1,724,539,1#1,726,544,1#1,719,535,1#1,725,534,1#1,722,531,1#1,715,534,1#1,712,538,1#1,707,544,1"
-	twMapArray(5) = "2,598,579,2#2,594,581,2#2,598,584,2#2,594,586,2#2,605,581,2#2,605,575,2#2,602,573,2#2,597,574,2#2,593,577,2"
-	//twMapArray(6) = ""
+	//twMapArray(0) = "0,728,736,0#10,728,758,0#20,742,738,0#30,721,731,0#0,731,735,0#10,730,755,0#20,743,741,0#30,718,729,0#0,730,739,0#10,733,757,0#20,740,742,0#30,716,732,0#0,734,737,0#10,737,758,0#20,744,744,0#30,717,736,0#0,725,739,0#10,736,755,0#20,748,742,0#30,720,735,0#0,724,736,0#10,735,750,0#20,747,737,0#30,724,736,0#0,725,732,0#10,731,750,0#20,744,735,0#30,725,732,0#0,728,730,0#10,728,751,0#20,740,735,0#30,725,728,0#0,731,731,0#0,734,733,0"
+	twMapArray(0) = "0,728,736,0#0,731,735,0#0,730,739,0#0,734,737,0#0,725,739,0#0,724,736,0#0,725,732,0#0,728,730,0#0,731,731,0#0,734,733,0"
+	twMapArray(2) = "10,728,758,0#10,730,755,0#10,733,757,0#10,737,758,0#10,736,755,0#10,735,750,0#10,731,750,0#10,728,751,0"
+	twMapArray(4) = "20,742,738,0#20,743,741,0#20,740,742,0#20,744,744,0#20,748,742,0#20,747,737,0#20,744,735,0#20,740,735,0"
+	twMapArray(6) = "30,721,731,0#30,718,729,0#30,716,732,0#30,717,736,0#30,720,735,0#30,724,736,0#30,725,732,0#30,725,728,0"
+	twMapArray(1) = "1,719,543,1#1,724,539,1#1,726,544,1#1,719,535,1#1,725,534,1#1,722,531,1#1,715,534,1#1,712,538,1#1,707,544,1"
+	twMapArray(3) = "2,598,579,2#2,594,581,2#2,598,584,2#2,594,586,2#2,605,581,2#2,605,575,2#2,602,573,2#2,597,574,2#2,593,577,2"
+	//twMapArray(5) = ""
 	//grigand map
 	gSkipBrigandMap = Array(0,0,0,0,0,0,0,0)
 

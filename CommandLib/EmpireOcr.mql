@@ -358,8 +358,28 @@ Function loadFontLib
     initGrayColor (grayMaskStr)
     
     
-    TracePrint SetDictEx(0, "Attachment:empire_fond_lib_2.txt")
+    TracePrint SetDictEx(0, "Attachment:empire_font_lib_s10.txt")
+	TracePrint SetDictEx(1, "Attachment:empire_font_lib_s8.txt")
     UseDict(0)
+End Function
+
+Function ocrSysNumber(x1, y1, x2, y2, size)
+	If IsNull(size) or size >= 10 Then 
+		UseDict(0)
+	Else
+		UseDict(1)
+	End If
+	
+	ocrSysNumber = OCR(x1, y1, x2, y2, "2A3748-303030|495A6B-202020|667B8C-201510", 0.9)
+End Function
+
+Function readPosiInteger(x1, y1, x2, y2, size)
+	Dim str = ocrSysNumber(x1, y1, x2, y2, size)
+	If str = "" Then 
+		str = "-1"
+	End If
+	
+	readPosiInteger = CInt(str)
 End Function
 
 Function hex2BinStr(hexStr)
