@@ -2958,7 +2958,8 @@ Function atkNomads(targetData, allAttackData)
     If targetData(TAGT_LVL) = 0 or targetData(TAGT_LVL) >= 81 Then 
         allTargetInfo = readAllEnimyCity(targetData(TAGT_TYPE))
     ElseIf targetData(TAGT_LVL) >= 71 Then
-    	fodderTimes = 2
+    	allTargetInfo = readAllEnimyCity(targetData(TAGT_TYPE))
+    	fodderTimes = 3
     ElseIf targetData(TAGT_LVL) >= 61 Then
     	//Level: 61-70
     	allTargetInfo = readAllEnimyCity(targetData(TAGT_TYPE))
@@ -3009,13 +3010,50 @@ Function atkNomads(targetData, allAttackData)
 	
 	
 	Dim firstSide = SIDE_CENTER
-    Dim sideIndex = SIDE_LEFT, baseIndex
+    Dim secondSide = SIDE_LEFT, baseIndex
     
-    If allTargetInfo(SIDE_LEFT, DF_LONG) = 119 And allTargetInfo(SIDE_RIGHT, DF_LONG) = 119 And allTargetInfo(SIDE_CENTER, DF_LONG) > 169 Then 
+    
+    If fodderTimes = 3 Then 
+    	Dim firstAtkTime = 2
+    	//min(DF_Long)
+    	firstSide = SIDE_CENTER
+    	If allTargetInfo(SIDE_CENTER, DF_LONG) > allTargetInfo(SIDE_LEFT, DF_LONG) Then 
+    		firstAtkTime = 4
+    		firstSide = SIDE_LEFT
+    		baseIndex = SIDE_RIGHT
+    		allTargetInfo(firstSide, DF_LONG) = CInt(allTargetInfo(firstSide, DF_LONG)*0.8)
+    	End If
+    	If allTargetInfo(firstSide, DF_LONG) > allTargetInfo(SIDE_RIGHT, DF_LONG) Then 
+    		firstAtkTime = 4
+    		firstSide = SIDE_RIGHT
+    		baseIndex = SIDE_LEFT
+    		allTargetInfo(firstSide, DF_LONG) = CInt(allTargetInfo(firstSide, DF_LONG)*0.8)
+    	End If
+    	
+    	If firstSide <> SIDE_CENTER Then 
+    		secondSide = SIDE_CENTER
+    		allTargetInfo(secondSide, DF_LONG) = 119
+    	ElseIf allTargetInfo(SIDE_LEFT, DF_NUM_SHORT) < allTargetInfo(SIDE_RIGHT, DF_NUM_SHORT)
+    		secondSide = SIDE_LEFT
+    		baseIndex = SIDE_RIGHT
+    		allTargetInfo(secondSide, DF_LONG) = 80
+    	Else 
+    		secondSide = SIDE_RIGHT
+    		baseIndex = SIDE_LEFT
+    		allTargetInfo(secondSide, DF_LONG) = 80
+    	End If
+    	allTargetInfo(firstSide, DF_PW_LONG) = 0
+    	allTargetInfo(secondSide, DF_PW_LONG) = 0
+    	
+    	TracePrint "Atk Nomand(7X):" & firstSide & "," & secondSide
+        allAttackData(firstSide) = buildAtkDataLong(allTargetInfo, targetType, firstSide, 0, firstAtkTime, ymCenterToolTimes, baseIndex)
+        allAttackData(secondSide) = buildAtkDataLong(allTargetInfo, targetType, secondSide, fodderTimes, 1, toolTimes, baseIndex)
+        
+    ElseIf allTargetInfo(SIDE_LEFT, DF_LONG) = 119 And allTargetInfo(SIDE_RIGHT, DF_LONG) = 119 And allTargetInfo(SIDE_CENTER, DF_LONG) > 169 Then 
     	allTargetInfo(SIDE_LEFT, DF_PW_LONG) = 0
     	allTargetInfo(SIDE_RIGHT, DF_PW_LONG) = 0
         
-        allAttackData(SIDE_LEFT) = buildAtkDataLong(allTargetInfo, targetType, SIDE_LEFT, fodderTimes, atkTimes, toolTimes, SIDE_CENTER)
+        allAttackData(SIDE_LEFT) = buildAtkDataLong(allTargetInfo, targetType, SIDE_LEFT, fodderTimes, atkTimes, ymCenterToolTimes, SIDE_CENTER)
         allAttackData(SIDE_RIGHT) = buildAtkDataLong(allTargetInfo, targetType, SIDE_RIGHT, fodderTimes, atkTimes, toolTimes, SIDE_CENTER)
     Else
     	
@@ -3023,39 +3061,39 @@ Function atkNomads(targetData, allAttackData)
     	If allTargetInfo(SIDE_LEFT, DF_LONG) = allTargetInfo(SIDE_RIGHT, DF_LONG) Then 
         	If allTargetInfo(SIDE_LEFT, DF_SHORT) * allTargetInfo(SIDE_LEFT, DF_NUM_SHORT) <= allTargetInfo(SIDE_RIGHT, DF_SHORT) * allTargetInfo(SIDE_RIGHT, DF_NUM_SHORT) Then 
             	//Left
-            	sideIndex = SIDE_LEFT
+            	secondSide = SIDE_LEFT
         	Else 
             	//Right
-            	sideIndex = SIDE_RIGHT 
+            	secondSide = SIDE_RIGHT 
         	End If
 			
     	ElseIf (allTargetInfo(SIDE_LEFT, DF_LONG) > 169 And allTargetInfo(SIDE_RIGHT, DF_LONG) > 169) or  (allTargetInfo(SIDE_LEFT, DF_LONG) <= 169 And allTargetInfo(SIDE_RIGHT, DF_LONG) <= 169) Then
         	//人数优势
         	If allTargetInfo(SIDE_LEFT, DF_SHORT) * allTargetInfo(SIDE_LEFT, DF_NUM_SHORT) <= allTargetInfo(SIDE_RIGHT, DF_SHORT) * allTargetInfo(SIDE_RIGHT, DF_NUM_SHORT) Then 
             	//Left
-            	sideIndex = SIDE_LEFT
+            	secondSide = SIDE_LEFT
         	Else 
             	//Right
-            	sideIndex = SIDE_RIGHT
+            	secondSide = SIDE_RIGHT
         	End If
     	ElseIf allTargetInfo(SIDE_LEFT, DF_LONG) < allTargetInfo(SIDE_RIGHT, DF_LONG) Then
         	//LEFT
-        	sideIndex = SIDE_LEFT
+        	secondSide = SIDE_LEFT
     	Else
         	//RIGHT
-        	sideIndex = SIDE_RIGHT
+        	secondSide = SIDE_RIGHT
     	End If
 		
 		
     	//2波，
-    	If sideIndex = SIDE_LEFT Then 
+    	If secondSide = SIDE_LEFT Then 
         	baseIndex = SIDE_RIGHT
     	Else 
         	baseIndex = SIDE_LEFT
     	End If
     	
     	allTargetInfo(firstSide, DF_PW_LONG) = 0
-    	allTargetInfo(sideIndex, DF_PW_LONG) = 0
+    	allTargetInfo(secondSide, DF_PW_LONG) = 0
     	If 2*allTargetInfo(baseIndex, DF_NUM_LONG) > allTargetInfo(baseIndex, DF_NUM_SHORT) Then 
     		allTargetInfo(baseIndex, DF_PW_SHORT) = 0
     	Else 
@@ -3064,7 +3102,7 @@ Function atkNomads(targetData, allAttackData)
     	
         //ymCenterToolTimes = 1,ymAtkTimes=4
         allAttackData(SIDE_CENTER) = buildAtkDataLong(allTargetInfo, targetType, SIDE_CENTER, fodderTimes, atkTimes, ymCenterToolTimes, baseIndex)
-        allAttackData(sideIndex) = buildAtkDataLong(allTargetInfo, targetType, sideIndex, fodderTimes, atkTimes, toolTimes, baseIndex)
+        allAttackData(secondSide) = buildAtkDataLong(allTargetInfo, targetType, secondSide, fodderTimes, atkTimes, toolTimes, baseIndex)
     End If
     atkNomads=0
 End Function
@@ -3113,7 +3151,8 @@ Function selectNomadsTools(sideDefData, batchTimes)
 	
 	
     If sideDefData(DF_DOOR) > 0 Then
-        If sideDefData(DF_LONG) >= 219 Then
+        //219
+        If sideDefData(DF_LONG) >= 180 Then
             If gFastCampaingFlag > 1 Then
             	//+10,+15
             	toolsInfo(0) = Array((sideDefData(DF_LONG)+shieldValue-1) \ shieldValue, toolShieldArray(shieldType))
@@ -3138,7 +3177,8 @@ Function selectNomadsTools(sideDefData, batchTimes)
             	toolsInfo(1) = Array(hammerCnt, "Attachment:slt_tool_iron_hammer.png")
             	toolsInfo(2) = Array(50 - cnt, "Attachment:slt_tool_shield.png", 6)
 			End If
-        ElseIf sideDefData(DF_LONG) = 169 Then
+        //169
+        ElseIf sideDefData(DF_LONG) > 120 Then
             //34 + x + y
             If gFastCampaingFlag > 1 Then 
             	toolsInfo(0) = Array((sideDefData(DF_LONG)+shieldValue-1) \ shieldValue, toolShieldArray(shieldType))
@@ -3164,7 +3204,7 @@ Function selectNomadsTools(sideDefData, batchTimes)
             	toolsInfo(1) = Array((sideDefData(DF_DOOR) + 19) \ 20, "Attachment:slt_tool_iron_hammer.png", 6)
             	toolsInfo(2) = Array((sideDefData(DF_WALL) + 9) \ 10, "Attachment:slt_tool_ladder.png", 6)
             End If
-        ElseIf sideDefData(DF_LONG) <= 119 Then
+        ElseIf sideDefData(DF_LONG) <= 120 Then
             //24 + x
             //toolsInfo(0) = Array(24, "Attachment:slt_tool_shield.png")
             
@@ -3175,7 +3215,7 @@ Function selectNomadsTools(sideDefData, batchTimes)
 			TracePrint "[ERROR] Not support logic."
         End If
     Else
-        If sideDefData(DF_LONG) >= 219 Then
+        If sideDefData(DF_LONG) >= 180 Then
             If gFastCampaingFlag > 1 Then
             	//+10,+15
             	toolsInfo(0) = Array((sideDefData(DF_LONG)+shieldValue-1) \ shieldValue, toolShieldArray(shieldType))
@@ -3186,7 +3226,7 @@ Function selectNomadsTools(sideDefData, batchTimes)
             	toolsInfo(0) = Array(ladderCnt, "Attachment:slt_tool_iron_ladder.png")
             	toolsInfo(1) = Array(50 - cnt, "Attachment:slt_tool_shield.png", 6)
 			End If
-        ElseIf sideDefData(DF_LONG) = 169 Then
+        ElseIf sideDefData(DF_LONG) > 120 Then
             If gFastCampaingFlag > 1 Then 
             	toolsInfo(0) = Array((sideDefData(DF_LONG)+shieldValue-1) \ shieldValue, toolShieldArray(shieldType))
             	toolsInfo(1) = Array((sideDefData(DF_WALL)+9)\10, "Attachment:slt_tool_ladder.png", 6)
@@ -3204,7 +3244,7 @@ Function selectNomadsTools(sideDefData, batchTimes)
             	toolsInfo(0) = Array(34, toolShieldArray(shieldType))
             	toolsInfo(1) = Array((sideDefData(DF_WALL) + 19) \ 20, "Attachment:slt_tool_iron_ladder.png", 6)
             End If
-        ElseIf sideDefData(DF_LONG) <= 119 Then
+        ElseIf sideDefData(DF_LONG) <= 120 Then
             toolsInfo(0) = Array((sideDefData(DF_LONG)+shieldValue-1) \ shieldValue, toolShieldArray(shieldType))
             toolsInfo(1) = Array((sideDefData(DF_WALL)+9)\10, "Attachment:slt_tool_ladder.png", 6)
         Else 
@@ -4703,7 +4743,7 @@ Function loadCdToolCfg
 	//ymCommander = Array(7, 8)
 	
 	//berimond arg
-	gBrmdSideLong = 0, gBrmdCenterLong = 60
+	gBrmdSideLong = 40, gBrmdCenterLong = 60
 End Function
 
 Function loadArmyCfgData
@@ -4734,15 +4774,15 @@ Function loadGlobalConfig
 	//build tool
 	gBuildTool=4, gCityBuildTool  = Array(-1,-1,-1,-1,3,3,3,4)
 	
-	gTimer = 30, gTimerPriority = 20, gCityRecruitTimer = 20
+	gTimer = 30, gTimerPriority = 15, gCityRecruitTimer = 15
 	gFirstStartCity = 0, gLastExePriorityNo = 0
 
 	//1:youmu，2：wushi  | gFastCampaingFlag 0:normal, 1:fast+wood 2:fast+iron
-	gCampaignType = 0, gCampaignMinTimer = 20, gFastCampaingFlag = 1
+	gCampaignType = 0, gCampaignMinTimer = 15, gFastCampaingFlag = 1
 	maxAtk = 6, maxSpy = 3, gMapContinueAtk=1
 	
 	//berimond campaign , buildType:1,zhangpeng,other:dec
-	gBrmdEnable = true, gBrmdBuildType=0
+	gBrmdEnable = false, gBrmdBuildType=0
 	gTaskEnable = true, gTranEnable=false, gOutCmdEnable = False, gHelpRecruitEnable=True
 	
 	//SPY_SUC_RATE = 12
