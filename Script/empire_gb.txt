@@ -41,6 +41,7 @@ Dim atkWavesMark,commanderArray,brigandsCmd,brigandsTower
 EmpireOcr.loadFontLib()
 
 Function main
+    
     //初始化基础数据
     init()
 	
@@ -58,13 +59,18 @@ Function main
 	//TracePrint Ocr(230,512,245,530, "2A3748-303030|495A6B-202020|667B8C-201510", 0.9)
 	//TracePrint(EmpireOcr.ocrSysNumber(100,548, 120,557, FONT_SIZE_8))
    
+   //
+   //cityBuildTask
+   
     //atk 测试
-    Dim data = Array(10,542,563,0,0,0,0,0,0) 
+    Dim data = Array(2,637,662,2,0,0,0,0,0,0) 
     //atkSamurai(data)
     //dealOneTarget(data, true, true)
     //Delay 15*60000
     //outerCommand
     //buildRoom(1)
+    //TapX(100, 403, 478)
+    //autoCreate
 	
 	//campaignBerimond()
 	//berimondRecruit
@@ -112,9 +118,11 @@ Function main
 	
     //clearPopWindow
     
+    /*
     gotoMainMap
     readMovements
 	campaignTask (curCampaignTowerArray)
+	*/
 	
 	//berimondRecruit()
 	//campaignBerimond()
@@ -307,6 +315,8 @@ Function mainLoop
         If gRunCounter Mod 2 = 0 Then 
             deleteAllEquip
         End If
+        
+        //cityBuildTask()
     Loop
 End Function
 
@@ -330,6 +340,7 @@ End Function
 Function TapX(n, x, y)
 	For i = 1 To n
 		Tap x, y
+		Delay 500
 	Next
 End Function
 
@@ -1215,6 +1226,50 @@ Function hospital(cityIndex)
     close
 End Function
 
+Function cityBuildTask()
+	gotoCity (7)
+	cityBuild(0)
+End Function
+
+Function cityBuild(type)
+    //fast tap
+    TracePrint "[cityBuild]"
+    clearPopWindow 
+    Delay DELAY_OPERATE_RANK(0)
+    Dim result = FindPic(0, 0, screenX, screenY, "Attachment:op_build_wait.png|Attachment:op_build_wait_acc.png", "080808", 0, 0.8, intX, intY)
+    If intX > -1 And intY > -1 Then 
+        If result = 0 Then
+            TracePrint "doing..."
+            Exit Function
+        ElseIf result = 1 Then
+            tapPosition intX, intY
+            Delay DELAY_OPERATE_RANK(1)
+        End If
+    End If
+	
+    FindPicFull "Attachment:banner_build.png"
+    If intX = -1 or intY = -1 Then 
+        TracePrint "can not find build icon"
+        Exit Function
+    End If
+	
+    tapPosition intX, intY
+    Delay DELAY_OPERATE_RANK(2)
+	
+    FindPicFull "Attachment:build_building_boat.png"
+    If intX = -1 or intY = -1 Then 
+        TracePrint "can not find build_building_boat icon"
+        Exit Function
+    End If
+	
+	PictureUtil.tapPositionDelay(intX+360, intY+45, DELAY_OPERATE_RANK(1))
+	
+	Dim region = Array(0, screenY*3/4, screenX, screenY)
+	PictureUtil.tapPicRegion(region, "Attachment:op_build_confirm.png", DELAY_OPERATE_RANK(0))
+
+	actionCancle()
+    clearPopWindow
+End Function
 
 /////////////////////////////////////////////////////////////////
 Function deleteAllEquip
@@ -3364,6 +3419,21 @@ Function atkBrigands(targetData, allAttackData)
 	
     Dim originTargetInfo = Clone(allTargetInfo)
     //TracePrint "Clone信息："& CommUtil.Join2DimArray(originTargetInfo) 
+    //Dim cloneTargetData = Clone(targetData)
+    //type,
+    Dim targetType = targetData(TAGT_TYPE)
+    
+    /*
+    //修正出兵
+    If targetType = 3 And targetData(TAGT_LVL) = 71 Then 
+        atkCannonTimes = 0
+        //Lvl:71,Inner has soldier
+        allTargetInfo(SIDE_CENTER, DF_PW_LONG) = allTargetInfo(SIDE_CENTER, DF_PW_SHORT)
+        allTargetInfo(SIDE_CENTER, DF_PW_SHORT) = originTargetInfo(SIDE_CENTER, DF_PW_LONG)
+        allTargetInfo(SIDE_CENTER, DF_NUM_LONG) = allTargetInfo(SIDE_CENTER, DF_NUM_SHORT)
+        allTargetInfo(SIDE_CENTER, DF_NUM_SHORT) = 0
+    End If
+	*/
 	
 	If targetData(TAGT_LVL) >= 24 And atkCannonTimes > 0 Then
     	For i = 0 To 2
@@ -3385,18 +3455,6 @@ Function atkBrigands(targetData, allAttackData)
             	End If
         	End If
     	Next
-    End If
-	
-    //Dim cloneTargetData = Clone(targetData)
-    //type,
-    Dim targetType = targetData(TAGT_TYPE)
-    //修正出兵
-    If targetType = 3 And targetData(TAGT_LVL) = 71 Then 
-        //Lvl:71,Inner has soldier
-        allTargetInfo(SIDE_CENTER, DF_PW_LONG) = allTargetInfo(SIDE_CENTER, DF_PW_SHORT)
-        allTargetInfo(SIDE_CENTER, DF_PW_SHORT) = originTargetInfo(SIDE_CENTER, DF_PW_LONG)
-        allTargetInfo(SIDE_CENTER, DF_NUM_LONG) = allTargetInfo(SIDE_CENTER, DF_NUM_SHORT)
-        allTargetInfo(SIDE_CENTER, DF_NUM_SHORT) = 0
     End If
 	
 	
@@ -3883,11 +3941,13 @@ Function selectSoldierNum2(soldierImages, mode, total, isLong)
                 Dim baseX = intX, baseY=intY
 				
                 //数字相对坐标：220，17，280，25
-                Dim str = EmpireOcr.ocrNumber(baseX+220, baseY+19, baseX+280, baseY+30)
-				
-				
-                Dim iAmount = CInt(str)
+                //Dim str = EmpireOcr.ocrNumber(baseX+220, baseY+19, baseX+280, baseY+30)
+                //Dim iAmount = CInt(str)
                 //TracePrint "m:" & str & ", iAmount:" & iAmount & ", mode" & mode
+                Dim iAmount = EmpireOcr.readPosiInteger(baseX+220, baseY+19, baseX+280, baseY+30, 9)
+                If iAmount = -1 Then 
+                	TracePrint "[ERROR] Can not read amount."
+                End If
 				
 				
                 If mode = 1 Then 
@@ -4199,7 +4259,11 @@ Function actionConfirm
 End Function
 
 Function actionCancle
-    tapPic "Attachment:op_cancle.png"
+    Dim result = tapPic("Attachment:op_cancle.png")
+    If result = False Then 
+    	KeyPress "Back"
+        Delay DELAY_OPERATE_RANK(1)
+    End If
 End Function
 
 Function tapPic(picPath)
@@ -4616,11 +4680,13 @@ Function loadTowerParam
     brigandsTower(1, 1) = Array(100, 60, 60, 1, 2, 2)
     brigandsTower(2) = Array(1)
     brigandsTower(2, 0) = Array(49, 60, 60, 1, 2, 1)
-    brigandsTower(2, 1) = Array(100, 60, 60, 1, 2, 2)
+    brigandsTower(2, 1) = Array(60, 60, 60, 1, 2, 2)
+    brigandsTower(2, 2) = Array(61, 60, 60, 1, 4, 0)
     brigandsTower(3) = Array(1)
     brigandsTower(3, 0) = Array(49, 60, 60, 1, 2, 1)
     brigandsTower(3, 1) = Array(69, 60, 60, 1, 2, 2)
-    brigandsTower(3, 2) = Array(90, 60, 60, 1, 1, 3)
+    brigandsTower(3, 2) = Array(70, 60, 60, 1, 3, 0)
+    brigandsTower(3, 3) = Array(71, 60, 60, 1, 4, 0)
 End Function
 
 
@@ -4737,9 +4803,9 @@ Function loadCdToolCfg
 	//24h, 5h, 1h, 30m, 10m, 5m, 1m
 	cdToolsEnable = Array(false, false, true, true, true, true) 
 	//cdToolsTime = Array(18000, 14000, 7200, 3000, 1200)
-	cdToolsTime = Array(18000,14000,7200,2400,600)
-	cdExeTimes=40
-	ymCenterToolTimes = 2,ymAtkTimes=3
+	cdToolsTime = Array(18000,14000,7200,3000,500)
+	cdExeTimes=10
+	ymCenterToolTimes = 2,ymAtkTimes=4
 	ymCommander = Array(7, 8)
 	
 	//berimond arg
@@ -4775,15 +4841,15 @@ Function loadGlobalConfig
 	//build tool
 	gBuildTool=4, gCityBuildTool  = Array(-1,-1,-1,-1,3,3,3,4)
 	
-	gTimer = 30, gTimerPriority = 10, gCityRecruitTimer = 20
+	gTimer = 30, gTimerPriority = 10, gCityRecruitTimer = 10
 	gFirstStartCity = 0, gLastExePriorityNo = 0
 
 	//1:youmu，2：wushi  | gFastCampaingFlag 0:normal, 1:fast+wood 2:fast+iron
-	gCampaignType = 0, gCampaignMinTimer = 10, gFastCampaingFlag = 1
-	maxAtk = 6, maxSpy = 3, gMapContinueAtk=1
+	gCampaignType = 1, gCampaignMinTimer = 10, gFastCampaingFlag = 1
+	maxAtk = 5, maxSpy = 3, gMapContinueAtk=1
 	
 	//berimond campaign , buildType:1,zhangpeng,other:dec
-	gBrmdEnable = true, gBrmdBuildType=0
+	gBrmdEnable = false, gBrmdBuildType=0
 	gTaskEnable = true, gTranEnable=false, gOutCmdEnable = True, gHelpRecruitEnable=True
 	
 	//SPY_SUC_RATE = 12
@@ -4793,25 +4859,29 @@ Function loadGlobalConfig
 	//============================================================================================
 	cmdArgs = "69,0,57#85,40,45#70,0,60#35,0,30#90,35,50#80,40,60#53,25,40#53,25,40#85,40,45"
 	
-	armyAtkArray(0) = Array(23,25,41,51,53,55,61,101,103,105)
-	armyAtkArray(1) = Array(24,26,42,52,54,56,62,102,104,106)
+	armyAtkArray(0) = Array(23,25,41,43,51,53,55,61,101,103,105)
+	armyAtkArray(1) = Array(24,26,42,44,52,54,56,62,102,104,106)
 	
 	armyHsptRtn = Array(41, 42, 101, 102, 103, 104)
 	
 	//cannon fodder
 	armyCannonFodder = Array(2, 4, 102, 106)
 	
-	twMapArray(0) = "-1,552,568,0#-1,555,569,0#-1,553,572,0#-1,549,571,0#-1,549,566,0#0,556,573,0#0,552,576,0#0,549,575,0#0,546,572,0#0,546,576,0"
-	twMapArray(6) = "10,543,566,0#10,546,567,0#10,542,569,0#10,539,570,0#10,537,567,0#10,538,562,0#10,542,563,0#10,545,562,0"
-	twMapArray(2) = "20,549,566,0#20,549,562,0#20,548,559,0#20,555,556,0#20,553,559,0#20,552,563,0#20,555,565,0#20,556,562,0"
-	twMapArray(4) = "30,565,568,0#30,568,565,0#30,565,564,0#30,562,566,0#30,559,563,0#30,558,566,0#30,560,569,0#30,559,572,0"
+	//twMapArray(0) = "-1,552,568,0#-1,555,569,0#-1,553,572,0#-1,549,571,0#-1,549,566,0#0,556,573,0#0,552,576,0#0,549,575,0#0,546,572,0#0,546,576,0"
+	//twMapArray(6) = "10,543,566,0#10,546,567,0#10,542,569,0#10,539,570,0#10,537,567,0#10,538,562,0#10,542,563,0#10,545,562,0"
+	//twMapArray(2) = "20,549,566,0#20,549,562,0#20,548,559,0#20,555,556,0#20,553,559,0#20,552,563,0#20,555,565,0#20,556,562,0"
+	//twMapArray(4) = "30,565,568,0#30,568,565,0#30,565,564,0#30,562,566,0#30,559,563,0#30,558,566,0#30,560,569,0#30,559,572,0"
+	//twMapArray(0) = "0,556,573,0#0,552,576,0#0,549,575,0"
+	//twMapArray(6) = "10,543,566,0#10,546,567,0#10,542,569,0"
+	//twMapArray(2) = "20,549,566,0#20,549,562,0#20,548,559,0"
+	//twMapArray(4) = "30,565,568,0#30,568,565,0#30,565,564,0"
 	twMapArray(3) = "1,637,737,1#1,634,733,1#1,641,738,1#1,629,739,1#1,637,729,1#1,641,730,1#1,646,734,1#1,635,744,1#1,627,733,1#1,629,727,1#1,624,741,1#1,638,746,1#1,644,743,1#1,635,749,1#1,648,739,1#1,644,726,1"
 	twMapArray(5) = "2,633,664,2#2,637,662,2#2,639,667,2#2,634,668,2#2,633,659,2#2,637,657,2#2,644,666,2#2,637,671,2#2,629,658,2#2,627,667,2#2,628,662,2#2,644,659,2#2,632,655,2#2,623,665,2#2,636,652,2#2,634,675,2"
 	twMapArray(1) = "3,626,704,3#3,622,702,3#3,632,704,3#3,624,708,3#3,630,709,3#3,636,700,3#3,629,695,3#3,625,697,3#3,620,698,3#3,617,703,3#3,620,706,3#3,617,709,3#3,636,695,3#3,627,690,3#3,626,716,3#3,632,715,3"
 	//grigand map
 	gSkipBrigandMap = Array(0,0,0,0,0,0,0,0)
 
-	twNomads = "0,556,566,11,90#0,551,568,11,90#10,550,565,11,90#20,551,566,11,90"
+	twNomads = "0,551,566,11,89#20,550,565,11,89#0,551,568,11,88#0,547,566,11,88"
 	
 	//twSamurai 
 	//twForeign

@@ -41,6 +41,7 @@ Dim atkWavesMark,commanderArray,brigandsCmd,brigandsTower
 EmpireOcr.loadFontLib()
 
 Function main
+    
     //初始化基础数据
     init()
 	
@@ -58,13 +59,18 @@ Function main
 	//TracePrint Ocr(230,512,245,530, "2A3748-303030|495A6B-202020|667B8C-201510", 0.9)
 	//TracePrint(EmpireOcr.ocrSysNumber(100,548, 120,557, FONT_SIZE_8))
    
+   //
+   //cityBuildTask
+   
     //atk 测试
-    Dim data = Array(0,541,539,11,78,0,0,0,0) 
+    Dim data = Array(2,637,662,2,0,0,0,0,0,0) 
     //atkSamurai(data)
-    dealOneTarget(data, true, true)
+    //dealOneTarget(data, true, true)
     //Delay 15*60000
     //outerCommand
     //buildRoom(1)
+    //TapX(100, 403, 478)
+    //autoCreate
 	
 	//campaignBerimond()
 	//berimondRecruit
@@ -112,9 +118,11 @@ Function main
 	
     //clearPopWindow
     
+    /*
     gotoMainMap
     readMovements
 	campaignTask (curCampaignTowerArray)
+	*/
 	
 	//berimondRecruit()
 	//campaignBerimond()
@@ -307,6 +315,8 @@ Function mainLoop
         If gRunCounter Mod 2 = 0 Then 
             deleteAllEquip
         End If
+        
+        //cityBuildTask()
     Loop
 End Function
 
@@ -330,6 +340,7 @@ End Function
 Function TapX(n, x, y)
 	For i = 1 To n
 		Tap x, y
+		Delay 500
 	Next
 End Function
 
@@ -1215,6 +1226,50 @@ Function hospital(cityIndex)
     close
 End Function
 
+Function cityBuildTask()
+	gotoCity (7)
+	cityBuild(0)
+End Function
+
+Function cityBuild(type)
+    //fast tap
+    TracePrint "[cityBuild]"
+    clearPopWindow 
+    Delay DELAY_OPERATE_RANK(0)
+    Dim result = FindPic(0, 0, screenX, screenY, "Attachment:op_build_wait.png|Attachment:op_build_wait_acc.png", "080808", 0, 0.8, intX, intY)
+    If intX > -1 And intY > -1 Then 
+        If result = 0 Then
+            TracePrint "doing..."
+            Exit Function
+        ElseIf result = 1 Then
+            tapPosition intX, intY
+            Delay DELAY_OPERATE_RANK(1)
+        End If
+    End If
+	
+    FindPicFull "Attachment:banner_build.png"
+    If intX = -1 or intY = -1 Then 
+        TracePrint "can not find build icon"
+        Exit Function
+    End If
+	
+    tapPosition intX, intY
+    Delay DELAY_OPERATE_RANK(2)
+	
+    FindPicFull "Attachment:build_building_boat.png"
+    If intX = -1 or intY = -1 Then 
+        TracePrint "can not find build_building_boat icon"
+        Exit Function
+    End If
+	
+	PictureUtil.tapPositionDelay(intX+360, intY+45, DELAY_OPERATE_RANK(1))
+	
+	Dim region = Array(0, screenY*3/4, screenX, screenY)
+	PictureUtil.tapPicRegion(region, "Attachment:op_build_confirm.png", DELAY_OPERATE_RANK(0))
+
+	actionCancle()
+    clearPopWindow
+End Function
 
 /////////////////////////////////////////////////////////////////
 Function deleteAllEquip
@@ -3364,6 +3419,21 @@ Function atkBrigands(targetData, allAttackData)
 	
     Dim originTargetInfo = Clone(allTargetInfo)
     //TracePrint "Clone信息："& CommUtil.Join2DimArray(originTargetInfo) 
+    //Dim cloneTargetData = Clone(targetData)
+    //type,
+    Dim targetType = targetData(TAGT_TYPE)
+    
+    /*
+    //修正出兵
+    If targetType = 3 And targetData(TAGT_LVL) = 71 Then 
+        atkCannonTimes = 0
+        //Lvl:71,Inner has soldier
+        allTargetInfo(SIDE_CENTER, DF_PW_LONG) = allTargetInfo(SIDE_CENTER, DF_PW_SHORT)
+        allTargetInfo(SIDE_CENTER, DF_PW_SHORT) = originTargetInfo(SIDE_CENTER, DF_PW_LONG)
+        allTargetInfo(SIDE_CENTER, DF_NUM_LONG) = allTargetInfo(SIDE_CENTER, DF_NUM_SHORT)
+        allTargetInfo(SIDE_CENTER, DF_NUM_SHORT) = 0
+    End If
+	*/
 	
 	If targetData(TAGT_LVL) >= 24 And atkCannonTimes > 0 Then
     	For i = 0 To 2
@@ -3385,18 +3455,6 @@ Function atkBrigands(targetData, allAttackData)
             	End If
         	End If
     	Next
-    End If
-	
-    //Dim cloneTargetData = Clone(targetData)
-    //type,
-    Dim targetType = targetData(TAGT_TYPE)
-    //修正出兵
-    If targetType = 3 And targetData(TAGT_LVL) = 71 Then 
-        //Lvl:71,Inner has soldier
-        allTargetInfo(SIDE_CENTER, DF_PW_LONG) = allTargetInfo(SIDE_CENTER, DF_PW_SHORT)
-        allTargetInfo(SIDE_CENTER, DF_PW_SHORT) = originTargetInfo(SIDE_CENTER, DF_PW_LONG)
-        allTargetInfo(SIDE_CENTER, DF_NUM_LONG) = allTargetInfo(SIDE_CENTER, DF_NUM_SHORT)
-        allTargetInfo(SIDE_CENTER, DF_NUM_SHORT) = 0
     End If
 	
 	
@@ -3883,11 +3941,13 @@ Function selectSoldierNum2(soldierImages, mode, total, isLong)
                 Dim baseX = intX, baseY=intY
 				
                 //数字相对坐标：220，17，280，25
-                Dim str = EmpireOcr.ocrNumber(baseX+220, baseY+19, baseX+280, baseY+30)
-				
-				
-                Dim iAmount = CInt(str)
+                //Dim str = EmpireOcr.ocrNumber(baseX+220, baseY+19, baseX+280, baseY+30)
+                //Dim iAmount = CInt(str)
                 //TracePrint "m:" & str & ", iAmount:" & iAmount & ", mode" & mode
+                Dim iAmount = EmpireOcr.readPosiInteger(baseX+220, baseY+19, baseX+280, baseY+30, 9)
+                If iAmount = -1 Then 
+                	TracePrint "[ERROR] Can not read amount."
+                End If
 				
 				
                 If mode = 1 Then 
@@ -4199,7 +4259,11 @@ Function actionConfirm
 End Function
 
 Function actionCancle
-    tapPic "Attachment:op_cancle.png"
+    Dim result = tapPic("Attachment:op_cancle.png")
+    If result = False Then 
+    	KeyPress "Back"
+        Delay DELAY_OPERATE_RANK(1)
+    End If
 End Function
 
 Function tapPic(picPath)
@@ -4616,11 +4680,13 @@ Function loadTowerParam
     brigandsTower(1, 1) = Array(100, 60, 60, 1, 2, 2)
     brigandsTower(2) = Array(1)
     brigandsTower(2, 0) = Array(49, 60, 60, 1, 2, 1)
-    brigandsTower(2, 1) = Array(100, 60, 60, 1, 2, 2)
+    brigandsTower(2, 1) = Array(60, 60, 60, 1, 2, 2)
+    brigandsTower(2, 2) = Array(61, 60, 60, 1, 4, 0)
     brigandsTower(3) = Array(1)
     brigandsTower(3, 0) = Array(49, 60, 60, 1, 2, 1)
     brigandsTower(3, 1) = Array(69, 60, 60, 1, 2, 2)
-    brigandsTower(3, 2) = Array(90, 60, 60, 1, 1, 3)
+    brigandsTower(3, 2) = Array(70, 60, 60, 1, 3, 0)
+    brigandsTower(3, 3) = Array(71, 60, 60, 1, 4, 0)
 End Function
 
 
@@ -4735,11 +4801,11 @@ End Function
 Dim cdToolsEnable,cdToolsTime,cdExeTimes,ymCenterToolTimes=1,ymAtkTimes=2,ymCommander
 Function loadCdToolCfg
 	//24h, 5h, 1h, 30m, 10m, 5m, 1m
-	cdToolsEnable = Array(false, false, true, true, true, true) 
+	cdToolsEnable = Array(false, true, true, true, true, true) 
 	//cdToolsTime = Array(18000, 14000, 7200, 3000, 1200)
-	cdToolsTime = Array(18000,14000,7200,2400,600)
+	cdToolsTime = Array(18000,14000,9000,2400,500)
 	cdExeTimes=40
-	ymCenterToolTimes = 1,ymAtkTimes=3
+	ymCenterToolTimes = 1,ymAtkTimes=2
 	//ymCommander = Array(7, 8)
 	
 	//berimond arg
@@ -4750,7 +4816,7 @@ Function loadArmyCfgData
 	Dim armyStrArray = Array(8)
     armyStrArray(0) = "1,长枪兵,spearman,26,0,26,8#2,木弓箭手,woodbow,0,24,8,24#3,链锤兵,maceman,38,0,38,6#4,弩箭手,crossbow,0,36,6,36#5,长斧兵,halberdier,17,0,135,45#6,长弓射手,longbowman,0,20,51,125#7,重剑手,swordsman_heavy,109,0,19,5#8,重弩箭手,crossbow_heavy,0,92,15,24#9,剑客,swordsman,61,0,5,3#10,铁弓箭手,ironbow,0,10,53,55#11,民兵,militias,3,0,9,9#12,高级民兵,militias_ad,10,0,10,10"
     armyStrArray(1) = "21,高级长枪兵,spearman_ad,15,0,142,52#22,高级木弓箭手,woodbow_ad,0,18,59,132#23,高级链锤兵,maceman_ad,118,0,20,6#24,高级弩箭手,crossbow_ad,0,98,16,26#25,高级重剑手,swordsman_heavy_ad,125,0,20,6#26,高级重弩箭手,crossbow_heavy_ad,0,114,16,26"
-    armyStrArray(2) = "41,皇家骑士,royal_knight,132,0,18,5#42,皇家弩箭手,royal_crossbow,0,121,14,23"
+    armyStrArray(2) = "41,皇家骑士,royal_knight,132,0,18,5#42,皇家弩箭手,royal_crossbow,0,121,14,23#43,精英骑士,elite_knight,132,0,18,5#44,精英弩箭手,elite_bow,0,121,14,23"
     armyStrArray(3) = "51,冰川勇士,ice_short,103,0,129,41#52,冰川弓箭手,ice_long,0,86,48,119#53,沙漠勇士,desert_short,109,0,135,45#54,沙漠弓箭手,desert_long,0,92,51,125#55,火山勇士,volcano_short,109,0,135,45#56,火山弓箭手,volcano_long,0,92,51,125"
     armyStrArray(4) = "61,行游骑士,travel_knight,146,0,20,9#62,行游弩箭手,travel_crossbow,0,135,22,30#63,恶魔勇士,demon_warrior,185,0,19,5#64,高级恶魔勇士,demon_warrior_ad,200,0,21,6#65,地狱勇士,hell_warrior,0,162,15,24#66,高级地狱勇士,hell_warrior_ad,0,175,17,26"
     armyStrArray(5) = "71,剃刀手,razor,139,0,6,3#72,高级剃刀手,razor_ad,149,0,20,15#73,弹弓手,trigger,0,130,5,9#74,高级弹弓手,trigger_ad,0,139,19,24#75,叛军勇士,rebel_warrior,160,0,20,7#76,叛军投箭手,rebel_darts,0,148,18,27#77,长毛轻骑兵,nomads_cavalry,13,0,150,34#78,掷抢手,nomads_spearman,0,14,35,139#79,叛军武士,rebel_def_short,14,0,165,61#80,叛军弓箭大师,rebel_def_long,0,16,66,153"
@@ -4774,16 +4840,16 @@ Function loadGlobalConfig
 	//build tool
 	gBuildTool=3, gCityBuildTool  = Array(-1,-1,-1,-1,3,3,4,4)
 	
-	gTimer = 30, gTimerPriority = 15, gCityRecruitTimer = 20
+	gTimer = 60, gTimerPriority = 60, gCityRecruitTimer = 60
 	gFirstStartCity = 0, gLastExePriorityNo = 0
 
 	//1:youmu，2：wushi  | gFastCampaingFlag 0:normal, 1:fast+wood 2:fast+iron
-	gCampaignType = 1, gCampaignMinTimer = 15, gFastCampaingFlag = 1
+	gCampaignType = 1, gCampaignMinTimer = 60, gFastCampaingFlag = 1
 	maxAtk = 6, maxSpy = 3, gMapContinueAtk=1
 	
 	//berimond campaign , buildType:1,zhangpeng,other:dec
 	gBrmdEnable = false, gBrmdBuildType=0
-	gTaskEnable = false, gTranEnable=false, gOutCmdEnable = false, gHelpRecruitEnable=false
+	gTaskEnable = true, gTranEnable=false, gOutCmdEnable = false, gHelpRecruitEnable=true
 	
 	//SPY_SUC_RATE = 12
 	//gAttackArmyLong = 80
@@ -4792,8 +4858,8 @@ Function loadGlobalConfig
 	//============================================================================================
 	cmdArgs = "20,21,17#43,0,36#0,21,17#0,17,14#0,0,0#0,0,0#0,0,0#0,0,0#0,0,0"
 	
-	armyAtkArray(0) = Array(23,25,41,51,53,55,61,63,64,72,75,101,103,105,111,113)
-	armyAtkArray(1) = Array(24,26,42,52,54,56,62,65,66,74,76,102,104,106,112,114)
+	armyAtkArray(0) = Array(23,25,41,43,51,53,55,61,63,64,72,75,101,103,105,111,113)
+	armyAtkArray(1) = Array(24,26,42,44,52,54,56,62,65,66,74,76,102,104,106,112,114)
 	
 	armyHsptRtn = Array(41, 42, 101, 102, 103, 104)
 	
@@ -4812,7 +4878,7 @@ Function loadGlobalConfig
 	//grigand map
 	gSkipBrigandMap = Array(0,0,0,0,0,0,0,0)
 
-	twNomads = "20,554,537,11,79#0,550,542,11,79#20,549,538,11,79#0,541,539,11,79"
+	twNomads = "0,541,539,11,88#20,549,538,11,88#0,539,541,11,88#20,554,537,11,89"
 	
 	//twSamurai 
 	//twForeign
